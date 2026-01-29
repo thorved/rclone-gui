@@ -48,6 +48,7 @@
                         IsSettingsVisible="False"
                         IsTitleBarAutoPaddingEnabled="False"
                         PaneDisplayMode="Left"
+                        IsPaneOpen="True"
                         OpenPaneLength="200"
                         Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
                         SelectionChanged="NavView_SelectionChanged">

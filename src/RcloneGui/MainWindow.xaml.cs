@@ -34,18 +34,19 @@ public sealed partial class MainWindow : Window
         var windowId = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(hwnd);
         _appWindow = AppWindow.GetFromWindowId(windowId);
         
-        // Set fixed window size
-        _appWindow.Resize(new SizeInt32(800, 600));
+        // Set fixed window size (larger)
+        _appWindow.Resize(new SizeInt32(900, 650));
         _appWindow.Title = "Rclone GUI";
         
         // Configure custom title bar
         ConfigureTitleBar();
         
-        // Disable resizing by using OverlappedPresenter
+        // Disable resizing but allow maximize by using OverlappedPresenter
         if (_appWindow.Presenter is OverlappedPresenter presenter)
         {
             presenter.IsResizable = false;
-            presenter.IsMaximizable = false;
+            presenter.IsMaximizable = true;
+            presenter.IsMinimizable = true;
         }
 
         // Handle close button

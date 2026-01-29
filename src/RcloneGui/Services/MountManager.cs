@@ -95,7 +95,15 @@ public class MountManager : IMountManager
             if (mountedDrive.RcloneProcess != null && !mountedDrive.RcloneProcess.HasExited)
             {
                 mountedDrive.RcloneProcess.Kill();
-                await mountedDrive.RcloneProcess.WaitForExitAsync();
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+                try
+                {
+                    await mountedDrive.RcloneProcess.WaitForExitAsync(cts.Token);
+                }
+                catch (OperationCanceledException)
+                {
+                    // Process didn't exit in time, continue anyway
+                }
             }
             else
             {

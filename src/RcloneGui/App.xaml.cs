@@ -88,13 +88,22 @@ public partial class App : Application
 
     public static async Task ExitApplicationAsync()
     {
-        // Unmount all drives gracefully
-        var mountManager = Services.GetRequiredService<IMountManager>();
-        await mountManager.UnmountAllAsync();
+        // Unmount all drives gracefully with timeout
+        try
+        {
+            var mountManager = Services.GetRequiredService<IMountManager>();
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            await mountManager.UnmountAllAsync().WaitAsync(cts.Token);
+        }
+        catch
+        {
+            // Ignore errors during cleanup - proceed with exit
+        }
         
         _singleInstanceMutex?.ReleaseMutex();
         _singleInstanceMutex?.Dispose();
         
+        // Force terminate the process immediately
         Environment.Exit(0);
     }
 }

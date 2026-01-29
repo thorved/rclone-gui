@@ -73,30 +73,31 @@
         <!-- System Tray Icon -->
         <tb:TaskbarIcon x:Name="TrayIcon"
                         ToolTipText="Rclone GUI"
+                        IconSource="ms-appx:///Assets/app.ico"
                         Visibility="Visible"
                         LeftClickCommand="{x:Null}"
                         NoLeftClickDelay="True"
                         DoubleClickCommand="{x:Null}">
             <tb:TaskbarIcon.ContextFlyout>
                 <MenuFlyout>
-                    <MenuFlyoutItem Text="Show Window" Click="TrayShow_Click">
+                    <MenuFlyoutItem x:Name="TrayShowMenuItem" Text="Show Window">
                         <MenuFlyoutItem.Icon>
                             <FontIcon Glyph="&#xE8A7;"/>
                         </MenuFlyoutItem.Icon>
                     </MenuFlyoutItem>
                     <MenuFlyoutSeparator/>
-                    <MenuFlyoutItem Text="Mount All" Click="TrayMountAll_Click">
+                    <MenuFlyoutItem x:Name="TrayMountAllMenuItem" Text="Mount All">
                         <MenuFlyoutItem.Icon>
                             <FontIcon Glyph="&#xE8CE;"/>
                         </MenuFlyoutItem.Icon>
                     </MenuFlyoutItem>
-                    <MenuFlyoutItem Text="Unmount All" Click="TrayUnmountAll_Click">
+                    <MenuFlyoutItem x:Name="TrayUnmountAllMenuItem" Text="Unmount All">
                         <MenuFlyoutItem.Icon>
                             <FontIcon Glyph="&#xE8D8;"/>
                         </MenuFlyoutItem.Icon>
                     </MenuFlyoutItem>
                     <MenuFlyoutSeparator/>
-                    <MenuFlyoutItem Text="Exit" Click="TrayExit_Click">
+                    <MenuFlyoutItem x:Name="TrayExitMenuItem" Text="Exit">
                         <MenuFlyoutItem.Icon>
                             <FontIcon Glyph="&#xE8BB;"/>
                         </MenuFlyoutItem.Icon>

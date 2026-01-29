@@ -34,6 +34,13 @@ public sealed partial class MainWindow : Window
         var windowId = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(hwnd);
         _appWindow = AppWindow.GetFromWindowId(windowId);
         
+        // Set window icon
+        var iconPath = Path.Combine(AppContext.BaseDirectory, "Assets", "app.ico");
+        if (File.Exists(iconPath))
+        {
+            _appWindow.SetIcon(iconPath);
+        }
+        
         // Set fixed window size (larger)
         _appWindow.Resize(new SizeInt32(900, 650));
         _appWindow.Title = "Rclone GUI";
@@ -54,6 +61,12 @@ public sealed partial class MainWindow : Window
 
         // Set up tray icon left click
         TrayIcon.LeftClickCommand = new RelayCommand(ShowAndActivateWindow);
+        
+        // Set up tray context menu commands
+        TrayShowMenuItem.Command = new RelayCommand(ShowAndActivateWindow);
+        TrayMountAllMenuItem.Command = new AsyncRelayCommand(async () => await _viewModel.MountAllCommand.ExecuteAsync(null));
+        TrayUnmountAllMenuItem.Command = new AsyncRelayCommand(async () => await _viewModel.UnmountAllCommand.ExecuteAsync(null));
+        TrayExitMenuItem.Command = new RelayCommand(ExitApplication);
 
         // Set initial page
         ContentFrame.Navigate(typeof(DrivesView));
@@ -178,11 +191,6 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    private void TrayShow_Click(object sender, RoutedEventArgs e)
-    {
-        ShowAndActivateWindow();
-    }
-
     private void ShowAndActivateWindow()
     {
         var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
@@ -191,21 +199,38 @@ public sealed partial class MainWindow : Window
         Activate();
     }
 
-    private async void TrayMountAll_Click(object sender, RoutedEventArgs e)
-    {
-        await _viewModel.MountAllCommand.ExecuteAsync(null);
-    }
-
-    private async void TrayUnmountAll_Click(object sender, RoutedEventArgs e)
-    {
-        await _viewModel.UnmountAllCommand.ExecuteAsync(null);
-    }
-
-    private async void TrayExit_Click(object sender, RoutedEventArgs e)
+    private void ExitApplication()
     {
         _isClosing = true;
-        TrayIcon.Dispose();
-        await App.ExitApplicationAsync();
+        
+        // Dispose tray icon first
+        try
+        {
+            TrayIcon.Dispose();
+        }
+        catch
+        {
+            // Ignore disposal errors
+        }
+        
+        // Fire and forget the cleanup, then force exit
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                var mountManager = App.Services.GetRequiredService<IMountManager>();
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+                await mountManager.UnmountAllAsync().WaitAsync(cts.Token);
+            }
+            catch
+            {
+                // Ignore cleanup errors
+            }
+            finally
+            {
+                Environment.Exit(0);
+            }
+        });
     }
 
     public void NavigateToAddConnection(Models.SftpConnection? connectionToEdit = null)

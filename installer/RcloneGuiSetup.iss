@@ -2,7 +2,7 @@
 ; Requires Inno Setup 6.0 or later
 
 #define MyAppName "Rclone GUI"
-#define MyAppVersion "1.0.0"
+#define MyAppVersion "0.0.1"
 #define MyAppPublisher "Thorved"
 #define MyAppURL "https://github.com/thorved/rclone-gui"
 #define MyAppExeName "RcloneGui.exe"

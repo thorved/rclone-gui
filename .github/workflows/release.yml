@@ -33,6 +33,25 @@ jobs:
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
         
+    - name: Verify .NET version
+      shell: pwsh
+      run: |
+        dotnet --version
+        dotnet --list-sdks
+        
+    - name: Create global.json to pin SDK version
+      shell: pwsh
+      run: |
+        $globalJson = @{
+          sdk = @{
+            version = "9.0.100"
+            rollForward = "latestFeature"
+          }
+        } | ConvertTo-Json -Depth 3
+        Set-Content -Path "global.json" -Value $globalJson
+        Write-Host "Created global.json:"
+        Get-Content "global.json"
+        
     - name: Update version in csproj
       shell: pwsh
       run: |

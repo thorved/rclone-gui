@@ -61,3 +61,9 @@ build/
 
 #VisualStudio
 .vs/
+
+# Installer output
+installer/output/
+
+# Publish output
+**/bin/publish/

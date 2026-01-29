@@ -2,8 +2,146 @@
 <Page
     x:Class="RcloneGui.Views.DrivesView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <Grid>
-        <TextBlock Text="Drives View" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:RcloneGui.Views"
+    xmlns:vm="using:RcloneGui.ViewModels"
+    xmlns:converters="using:RcloneGui.Converters">
+    
+    <Page.Resources>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibility"/>
+        <converters:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibility"/>
+        <converters:MountStatusToColorConverter x:Key="StatusToColor"/>
+        <converters:MountStatusToTextConverter x:Key="StatusToText"/>
+    </Page.Resources>
+    
+    <Grid Padding="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,16">
+            <TextBlock Text="My Drives" Style="{StaticResource TitleTextBlockStyle}"/>
+            <TextBlock Text="Manage your SFTP connections and mounted drives" 
+                       Style="{StaticResource CaptionTextBlockStyle}" 
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                       Margin="0,4,0,0"/>
+        </StackPanel>
+        
+        <!-- Drives List -->
+        <Grid Grid.Row="1">
+            <!-- Empty State -->
+            <StackPanel HorizontalAlignment="Center" 
+                        VerticalAlignment="Center"
+                        Visibility="{x:Bind ViewModel.HasNoDrives, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                <FontIcon Glyph="&#xE8B7;" FontSize="64" 
+                          Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                          HorizontalAlignment="Center"/>
+                <TextBlock Text="No Connections Yet" 
+                           Style="{StaticResource SubtitleTextBlockStyle}"
+                           HorizontalAlignment="Center"
+                           Margin="0,16,0,8"/>
+                <TextBlock Text="Click 'Add Connection' to create your first SFTP mount"
+                           Style="{StaticResource CaptionTextBlockStyle}"
+                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                           HorizontalAlignment="Center"/>
+                <Button Content="Add Connection" 
+                        Style="{StaticResource AccentButtonStyle}"
+                        HorizontalAlignment="Center"
+                        Margin="0,24,0,0"
+                        Click="AddConnection_Click"/>
+            </StackPanel>
+            
+            <!-- Drives ListView -->
+            <ListView ItemsSource="{x:Bind ViewModel.Drives, Mode=OneWay}"
+                      SelectionMode="None"
+                      Visibility="{x:Bind ViewModel.HasDrives, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                <ListView.ItemTemplate>
+                    <DataTemplate x:DataType="vm:DriveItemViewModel">
+                        <Grid Padding="16" 
+                              Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                              CornerRadius="8"
+                              Margin="0,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <!-- Drive Icon -->
+                            <Grid Grid.Column="0" 
+                                  Width="48" Height="48" 
+                                  CornerRadius="8"
+                                  Background="{ThemeResource AccentFillColorDefaultBrush}"
+                                  Margin="0,0,16,0">
+                                <FontIcon Glyph="&#xE8B7;" 
+                                          FontSize="24" 
+                                          Foreground="White"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"/>
+                            </Grid>
+                            
+                            <!-- Drive Info -->
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock Text="{x:Bind Connection.Name, Mode=OneWay}" 
+                                           Style="{StaticResource BodyStrongTextBlockStyle}"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                    <TextBlock Text="{x:Bind Connection.Host, Mode=OneWay}"
+                                               Style="{StaticResource CaptionTextBlockStyle}"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                    <TextBlock Text=" • " 
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                    <TextBlock Text="{x:Bind DriveLetter, Mode=OneWay}"
+                                               Style="{StaticResource CaptionTextBlockStyle}"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                    <Ellipse Width="8" Height="8" 
+                                             Fill="{x:Bind Status, Mode=OneWay, Converter={StaticResource StatusToColor}}"
+                                             Margin="0,0,8,0"
+                                             VerticalAlignment="Center"/>
+                                    <TextBlock Text="{x:Bind Status, Mode=OneWay, Converter={StaticResource StatusToText}}"
+                                               Style="{StaticResource CaptionTextBlockStyle}"/>
+                                </StackPanel>
+                            </StackPanel>
+                            
+                            <!-- Actions -->
+                            <StackPanel Grid.Column="2" 
+                                        Orientation="Horizontal" 
+                                        Spacing="8"
+                                        VerticalAlignment="Center">
+                                <Button Command="{x:Bind MountCommand}"
+                                        IsEnabled="{x:Bind CanMount, Mode=OneWay}"
+                                        ToolTipService.ToolTip="Mount Drive">
+                                    <FontIcon Glyph="&#xE768;" FontSize="16"/>
+                                </Button>
+                                <Button Command="{x:Bind UnmountCommand}"
+                                        IsEnabled="{x:Bind CanUnmount, Mode=OneWay}"
+                                        ToolTipService.ToolTip="Unmount Drive">
+                                    <FontIcon Glyph="&#xE74B;" FontSize="16"/>
+                                </Button>
+                                <Button Command="{x:Bind OpenCommand}"
+                                        IsEnabled="{x:Bind IsMounted, Mode=OneWay}"
+                                        ToolTipService.ToolTip="Open in Explorer">
+                                    <FontIcon Glyph="&#xED25;" FontSize="16"/>
+                                </Button>
+                                <Button ToolTipService.ToolTip="More Options">
+                                    <FontIcon Glyph="&#xE712;" FontSize="16"/>
+                                    <Button.Flyout>
+                                        <MenuFlyout>
+                                            <MenuFlyoutItem Text="Edit" Icon="Edit" Command="{x:Bind EditCommand}"/>
+                                            <MenuFlyoutItem Text="Duplicate" Icon="Copy"/>
+                                            <MenuFlyoutSeparator/>
+                                            <MenuFlyoutItem Text="Delete" Icon="Delete" Command="{x:Bind DeleteCommand}"/>
+                                        </MenuFlyout>
+                                    </Button.Flyout>
+                                </Button>
+                            </StackPanel>
+                        </Grid>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+        </Grid>
     </Grid>
 </Page>

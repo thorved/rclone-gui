@@ -83,6 +83,8 @@ public partial class SettingsViewModel : ObservableObject
         RcloneVersion = await _rcloneService.GetVersionAsync();
     }
 
+    public Task LoadSettingsAsync() => InitializeAsync();
+
     [RelayCommand]
     private async Task SaveSettingsAsync()
     {

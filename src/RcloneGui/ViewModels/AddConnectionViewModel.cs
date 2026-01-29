@@ -119,6 +119,8 @@ public partial class AddConnectionViewModel : ObservableObject
         // Note: Password fields are not loaded for security
     }
 
+    public void RefreshAvailableDriveLetters() => LoadAvailableDriveLetters();
+
     private void LoadAvailableDriveLetters()
     {
         AvailableDriveLetters.Clear();

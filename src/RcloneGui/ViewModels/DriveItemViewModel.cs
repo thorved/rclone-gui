@@ -52,6 +52,21 @@ public partial class DriveItemViewModel : ObservableObject
         _ => "\uE9CE"
     };
 
+    /// <summary>
+    /// Returns true if the drive can be mounted (not already mounted or busy).
+    /// </summary>
+    public bool CanMount => Status == MountStatus.Unmounted || Status == MountStatus.Error;
+
+    /// <summary>
+    /// Returns true if the drive can be unmounted (currently mounted).
+    /// </summary>
+    public bool CanUnmount => Status == MountStatus.Mounted;
+
+    /// <summary>
+    /// Returns true if the drive is currently mounted.
+    /// </summary>
+    public bool IsMounted => Status == MountStatus.Mounted;
+
     public DriveItemViewModel(SftpConnection connection, IMountManager mountManager, IRcloneService rcloneService)
     {
         Connection = connection;
@@ -167,9 +182,39 @@ public partial class DriveItemViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// Alias for OpenDrive command for XAML binding as OpenCommand.
+    /// </summary>
+    public IRelayCommand OpenCommand => OpenDriveCommand;
+
+    /// <summary>
+    /// Event triggered when the user wants to edit this connection.
+    /// </summary>
+    public event EventHandler? EditRequested;
+
+    /// <summary>
+    /// Event triggered when the user wants to delete this connection.
+    /// </summary>
+    public event EventHandler? DeleteRequested;
+
+    [RelayCommand]
+    private void Edit()
+    {
+        EditRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    [RelayCommand]
+    private void Delete()
+    {
+        DeleteRequested?.Invoke(this, EventArgs.Empty);
+    }
+
     partial void OnStatusChanged(MountStatus value)
     {
         OnPropertyChanged(nameof(StatusText));
         OnPropertyChanged(nameof(StatusIcon));
+        OnPropertyChanged(nameof(CanMount));
+        OnPropertyChanged(nameof(CanUnmount));
+        OnPropertyChanged(nameof(IsMounted));
     }
 }

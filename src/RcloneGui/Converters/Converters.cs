@@ -229,3 +229,100 @@ public class TestResultSeverityConverter : IValueConverter
         throw new NotImplementedException();
     }
 }
+
+/// <summary>
+/// Inverse bool to visibility (for binding compatibility).
+/// Alias for InvertBoolToVisibilityConverter.
+/// </summary>
+public class InverseBoolToVisibilityConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, string language)
+    {
+        if (value is bool b)
+        {
+            return b ? Visibility.Collapsed : Visibility.Visible;
+        }
+        return Visibility.Visible;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, string language)
+    {
+        return value is Visibility v && v == Visibility.Collapsed;
+    }
+}
+
+/// <summary>
+/// Converts AuthenticationType to visibility for Password/KeyFile panels.
+/// Parameter should be "Password" or "KeyFile".
+/// </summary>
+public class AuthTypeToVisibilityConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, string language)
+    {
+        if (value is AuthenticationType authType && parameter is string targetType2)
+        {
+            bool isMatch = authType.ToString() == targetType2;
+            return isMatch ? Visibility.Visible : Visibility.Collapsed;
+        }
+        return Visibility.Collapsed;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, string language)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+/// <summary>
+/// Converts MountStatus to a color brush.
+/// </summary>
+public class MountStatusToColorConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, string language)
+    {
+        if (value is MountStatus status)
+        {
+            return status switch
+            {
+                MountStatus.Mounted => new SolidColorBrush(Colors.Green),
+                MountStatus.Mounting => new SolidColorBrush(Colors.Orange),
+                MountStatus.Unmounting => new SolidColorBrush(Colors.Orange),
+                MountStatus.Error => new SolidColorBrush(Colors.Red),
+                _ => new SolidColorBrush(Colors.Gray)
+            };
+        }
+        return new SolidColorBrush(Colors.Gray);
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, string language)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+/// <summary>
+/// Converts MountStatus to display text.
+/// </summary>
+public class MountStatusToTextConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, string language)
+    {
+        if (value is MountStatus status)
+        {
+            return status switch
+            {
+                MountStatus.Mounted => "Connected",
+                MountStatus.Mounting => "Connecting...",
+                MountStatus.Unmounting => "Disconnecting...",
+                MountStatus.Error => "Error",
+                _ => "Disconnected"
+            };
+        }
+        return "Disconnected";
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, string language)
+    {
+        throw new NotImplementedException();
+    }
+}

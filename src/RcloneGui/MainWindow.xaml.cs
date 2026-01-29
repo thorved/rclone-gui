@@ -1,3 +1,4 @@
+using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -32,6 +33,9 @@ public sealed partial class MainWindow : Window
 
         // Handle close button
         appWindow.Closing += AppWindow_Closing;
+
+        // Set up tray icon left click
+        TrayIcon.LeftClickCommand = new RelayCommand(ShowAndActivateWindow);
 
         // Set initial page
         ContentFrame.Navigate(typeof(DrivesView));
@@ -131,9 +135,15 @@ public sealed partial class MainWindow : Window
 
     private void TrayShow_Click(object sender, RoutedEventArgs e)
     {
-        Activate();
+        ShowAndActivateWindow();
+    }
+
+    private void ShowAndActivateWindow()
+    {
         var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
         Windows.Win32.PInvoke.ShowWindow(new Windows.Win32.Foundation.HWND(hwnd), Windows.Win32.UI.WindowsAndMessaging.SHOW_WINDOW_CMD.SW_RESTORE);
+        Windows.Win32.PInvoke.SetForegroundWindow(new Windows.Win32.Foundation.HWND(hwnd));
+        Activate();
     }
 
     private async void TrayMountAll_Click(object sender, RoutedEventArgs e)

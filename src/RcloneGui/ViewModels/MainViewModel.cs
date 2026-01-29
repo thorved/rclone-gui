@@ -19,6 +19,12 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private ObservableCollection<DriveItemViewModel> _drives = new();
 
+    partial void OnDrivesChanged(ObservableCollection<DriveItemViewModel> value)
+    {
+        OnPropertyChanged(nameof(HasDrives));
+        OnPropertyChanged(nameof(HasNoDrives));
+    }
+
     [ObservableProperty]
     private DriveItemViewModel? _selectedDrive;
 
@@ -33,6 +39,9 @@ public partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     private string? _statusMessage;
+
+    public bool HasDrives => Drives.Count > 0;
+    public bool HasNoDrives => Drives.Count == 0;
 
     public MainViewModel(
         IConfigManager configManager,

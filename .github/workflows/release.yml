@@ -78,6 +78,7 @@ jobs:
       run: |
         dotnet publish ${{ env.PROJECT_PATH }} `
           --configuration ${{ env.BUILD_CONFIGURATION }} `
+          --framework ${{ env.TARGET_FRAMEWORK }} `
           --runtime ${{ env.RUNTIME_IDENTIFIER }} `
           --self-contained true `
           -p:Platform=${{ env.BUILD_PLATFORM }} `

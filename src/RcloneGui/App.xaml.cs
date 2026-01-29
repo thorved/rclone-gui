@@ -1,8 +1,11 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.UI.Xaml;
-using RcloneGui.Services;
-using RcloneGui.ViewModels;
+using RcloneGui.Core.Services;
+using RcloneGui.Features.Dashboard.ViewModels;
+using RcloneGui.Features.Dashboard.Views;
+using RcloneGui.Features.Sftp.ViewModels;
+using RcloneGui.Features.Ftp.ViewModels;
 using System.Threading;
 
 namespace RcloneGui;
@@ -37,19 +40,24 @@ public partial class App : Application
         _host = Host.CreateDefaultBuilder()
             .ConfigureServices((context, services) =>
             {
-                // Services
-                services.AddSingleton<IRcloneService, RcloneService>();
+                // Core Services
+                services.AddSingleton<ISftpService, SftpService>();
+                services.AddSingleton<IFtpService, FtpService>();
                 services.AddSingleton<IConfigManager, ConfigManager>();
                 services.AddSingleton<IMountManager, MountManager>();
                 services.AddSingleton<IWinFspManager, WinFspManager>();
                 services.AddSingleton<INotificationService, NotificationService>();
                 
-                // ViewModels
+                // Dashboard ViewModels
                 services.AddTransient<MainViewModel>();
-                services.AddTransient<AddConnectionViewModel>();
-                services.AddTransient<AddFtpConnectionViewModel>();
                 services.AddTransient<SettingsViewModel>();
                 services.AddTransient<DriveItemViewModel>();
+                
+                // SFTP Feature ViewModels
+                services.AddTransient<AddSftpConnectionViewModel>();
+                
+                // FTP Feature ViewModels
+                services.AddTransient<AddFtpConnectionViewModel>();
             })
             .Build();
 
@@ -72,7 +80,7 @@ public partial class App : Application
         _mainWindow = new MainWindow();
         
         // Apply saved theme on startup
-        ApplyTheme(configManager.Settings?.Theme ?? Models.AppTheme.System);
+        ApplyTheme(configManager.Settings?.Theme ?? Core.Models.AppTheme.System);
         
         // Check if should start minimized
         var shouldStartMinimized = ShouldStartMinimized(configManager.Settings);
@@ -92,7 +100,7 @@ public partial class App : Application
         await mountManager.AutoMountAsync();
     }
 
-    private static bool ShouldStartMinimized(Models.AppSettings? settings)
+    private static bool ShouldStartMinimized(Core.Models.AppSettings? settings)
     {
         // Check command line arguments for --minimized flag
         var cmdArgs = Environment.GetCommandLineArgs();
@@ -105,15 +113,15 @@ public partial class App : Application
         return settings?.StartMinimized == true;
     }
 
-    private static void ApplyTheme(Models.AppTheme theme)
+    public static void ApplyTheme(Core.Models.AppTheme theme)
     {
         var window = MainWindowInstance;
         if (window?.Content is Microsoft.UI.Xaml.FrameworkElement rootElement)
         {
             rootElement.RequestedTheme = theme switch
             {
-                Models.AppTheme.Light => Microsoft.UI.Xaml.ElementTheme.Light,
-                Models.AppTheme.Dark => Microsoft.UI.Xaml.ElementTheme.Dark,
+                Core.Models.AppTheme.Light => Microsoft.UI.Xaml.ElementTheme.Light,
+                Core.Models.AppTheme.Dark => Microsoft.UI.Xaml.ElementTheme.Dark,
                 _ => Microsoft.UI.Xaml.ElementTheme.Default
             };
         }

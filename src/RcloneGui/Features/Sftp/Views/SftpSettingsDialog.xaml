@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ContentDialog
+    x:Class="RcloneGui.Features.Sftp.Views.SftpSettingsDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:RcloneGui.Features.Sftp.Views"
+    Title="SFTP Settings"
+    PrimaryButtonText="Save"
+    CloseButtonText="Cancel"
+    DefaultButton="Primary"
+    PrimaryButtonClick="ContentDialog_PrimaryButtonClick">
+    
+    <Grid Width="500">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
+        <ScrollViewer Grid.Row="0" MaxHeight="400" VerticalScrollBarVisibility="Auto">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                
+                <!-- Left Column -->
+                <StackPanel Grid.Column="0" Spacing="10" Margin="0,0,10,0">
+                    <TextBox x:Name="NameBox" Header="Name" PlaceholderText="My Server"/>
+                    
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="70"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox x:Name="HostBox" Header="Host" PlaceholderText="sftp.example.com" Margin="0,0,6,0"/>
+                        <NumberBox x:Name="PortBox" Grid.Column="1" Header="Port" Value="22"
+                                   Minimum="1" Maximum="65535" SpinButtonPlacementMode="Hidden"/>
+                    </Grid>
+                    
+                    <TextBox x:Name="UsernameBox" Header="Username" PlaceholderText="user"/>
+                    
+                    <StackPanel>
+                        <TextBlock Text="Auth" Style="{StaticResource CaptionTextBlockStyle}" Margin="0,0,0,4"/>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <RadioButton x:Name="PasswordRadio" Content="Password" Tag="Password" IsChecked="True" Checked="AuthType_Changed"/>
+                            <RadioButton x:Name="KeyRadio" Content="Key" Tag="Key" Checked="AuthType_Changed"/>
+                        </StackPanel>
+                    </StackPanel>
+                    
+                    <StackPanel x:Name="PasswordPanel">
+                        <PasswordBox x:Name="PasswordBox" Header="Password" PlaceholderText="Enter password"/>
+                        <TextBlock x:Name="PasswordHintText" Text="Leave blank to keep existing" 
+                                   Style="{StaticResource CaptionTextBlockStyle}"
+                                   Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                   Visibility="Collapsed" Margin="0,2,0,0"/>
+                    </StackPanel>
+                    
+                    <StackPanel x:Name="KeyPanel" Visibility="Collapsed" Spacing="8">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox x:Name="KeyFileBox" Header="Key File" PlaceholderText="Path" IsReadOnly="True"/>
+                            <Button Grid.Column="1" Content="..." VerticalAlignment="Bottom" Margin="4,0,0,0" 
+                                    Click="BrowseKeyFile_Click" Width="32" Height="32"/>
+                        </Grid>
+                        <PasswordBox x:Name="KeyPassphraseBox" Header="Passphrase" PlaceholderText="Optional"/>
+                    </StackPanel>
+                </StackPanel>
+                
+                <!-- Right Column -->
+                <StackPanel Grid.Column="1" Spacing="10" Margin="10,0,0,0">
+                    <TextBox x:Name="RemotePathBox" Header="Remote Path" PlaceholderText="/"/>
+                    
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="70"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <ComboBox x:Name="DriveLetterCombo" Header="Drive" HorizontalAlignment="Stretch" Margin="0,0,6,0"/>
+                        <TextBox x:Name="VolumeNameBox" Grid.Column="1" Header="Volume" PlaceholderText="SFTP"/>
+                    </Grid>
+                    
+                    <StackPanel Spacing="6" Margin="0,8,0,0">
+                        <CheckBox x:Name="ReadOnlySwitch" Content="Read-only"/>
+                        <CheckBox x:Name="NetworkModeSwitch" Content="Network drive"/>
+                        <CheckBox x:Name="AutoMountSwitch" Content="Auto-mount"/>
+                    </StackPanel>
+                </StackPanel>
+            </Grid>
+        </ScrollViewer>
+        
+        <!-- Footer -->
+        <StackPanel Grid.Row="1" Margin="0,12,0,0">
+            <InfoBar x:Name="ErrorInfoBar" IsOpen="False" Severity="Error" Title="Error" IsClosable="False"/>
+        </StackPanel>
+    </Grid>
+</ContentDialog>

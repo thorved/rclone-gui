@@ -69,3 +69,4 @@ installer/output/
 **/bin/publish/
 
 nul
+*.txt

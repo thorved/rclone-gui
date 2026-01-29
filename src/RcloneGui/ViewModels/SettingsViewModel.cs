@@ -14,6 +14,7 @@ public partial class SettingsViewModel : ObservableObject
     private readonly IConfigManager _configManager;
     private readonly IWinFspManager _winFspManager;
     private readonly IRcloneService _rcloneService;
+    private bool _isInitializing;
 
     [ObservableProperty]
     private bool _startMinimized;
@@ -28,7 +29,13 @@ public partial class SettingsViewModel : ObservableObject
     private bool _autoMountOnStartup;
 
     [ObservableProperty]
+    private bool _unmountOnClose;
+
+    [ObservableProperty]
     private bool _showNotifications;
+
+    [ObservableProperty]
+    private int _selectedThemeIndex;
 
     [ObservableProperty]
     private AppTheme _theme;
@@ -65,63 +72,35 @@ public partial class SettingsViewModel : ObservableObject
 
     public async Task InitializeAsync()
     {
-        var settings = _configManager.Settings;
-        if (settings != null)
-        {
-            StartMinimized = settings.StartMinimized;
-            MinimizeToTray = settings.MinimizeToTray;
-            StartWithWindows = settings.StartWithWindows;
-            AutoMountOnStartup = settings.AutoMountOnStartup;
-            ShowNotifications = settings.ShowNotifications;
-            Theme = settings.Theme;
-            CustomRclonePath = settings.CustomRclonePath;
-            CacheDirectory = settings.CacheDirectory;
-        }
-
-        IsWinFspInstalled = _winFspManager.IsInstalled();
-        WinFspVersion = _winFspManager.GetVersion();
-        RcloneVersion = await _rcloneService.GetVersionAsync();
-    }
-
-    public Task LoadSettingsAsync() => InitializeAsync();
-
-    [RelayCommand]
-    private async Task SaveSettingsAsync()
-    {
-        IsBusy = true;
-        StatusMessage = null;
-
+        _isInitializing = true;
         try
         {
             var settings = _configManager.Settings;
             if (settings != null)
             {
-                settings.StartMinimized = StartMinimized;
-                settings.MinimizeToTray = MinimizeToTray;
-                settings.StartWithWindows = StartWithWindows;
-                settings.AutoMountOnStartup = AutoMountOnStartup;
-                settings.ShowNotifications = ShowNotifications;
-                settings.Theme = Theme;
-                settings.CustomRclonePath = CustomRclonePath;
-                settings.CacheDirectory = CacheDirectory;
-
-                await _configManager.SaveSettingsAsync();
-
-                // Update Windows startup
-                UpdateWindowsStartup(StartWithWindows);
-
-                StatusMessage = "Settings saved successfully";
+                StartMinimized = settings.StartMinimized;
+                MinimizeToTray = settings.MinimizeToTray;
+                StartWithWindows = settings.StartWithWindows;
+                AutoMountOnStartup = settings.AutoMountOnStartup;
+                UnmountOnClose = settings.UnmountOnClose;
+                ShowNotifications = settings.ShowNotifications;
+                Theme = settings.Theme;
+                SelectedThemeIndex = (int)settings.Theme;
+                CustomRclonePath = settings.CustomRclonePath;
+                CacheDirectory = settings.CacheDirectory;
             }
-        }
-        catch (Exception ex)
-        {
-            StatusMessage = $"Error saving settings: {ex.Message}";
+
+            IsWinFspInstalled = _winFspManager.IsInstalled();
+            WinFspVersion = _winFspManager.GetVersion();
+            RcloneVersion = await _rcloneService.GetVersionAsync();
         }
         finally
         {
-            IsBusy = false;
+            _isInitializing = false;
         }
     }
+
+    public Task LoadSettingsAsync() => InitializeAsync();
 
     [RelayCommand]
     private async Task ExportConfigAsync()
@@ -132,6 +111,11 @@ public partial class SettingsViewModel : ObservableObject
         var documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
         var filePath = Path.Combine(documentsPath, fileName);
 
+        await ExportConfigToPathAsync(filePath);
+    }
+
+    public async Task ExportConfigToPathAsync(string filePath)
+    {
         IsBusy = true;
         try
         {
@@ -159,11 +143,22 @@ public partial class SettingsViewModel : ObservableObject
             return;
         }
 
+        await ImportConfigFromPathAsync(filePath);
+    }
+
+    public async Task ImportConfigFromPathAsync(string filePath)
+    {
         IsBusy = true;
         try
         {
             var (success, message) = await _configManager.ImportConfigAsync(filePath);
             StatusMessage = message;
+            
+            // Reload settings after import
+            if (success)
+            {
+                await LoadSettingsAsync();
+            }
         }
         catch (Exception ex)
         {
@@ -234,7 +229,9 @@ public partial class SettingsViewModel : ObservableObject
                     var exePath = Environment.ProcessPath;
                     if (!string.IsNullOrEmpty(exePath))
                     {
-                        key.SetValue(appName, $"\"{exePath}\" --minimized");
+                        // Add --minimized flag if StartMinimized is enabled
+                        var args = StartMinimized ? " --minimized" : "";
+                        key.SetValue(appName, $"\"{exePath}\"{args}");
                     }
                 }
                 else
@@ -247,5 +244,146 @@ public partial class SettingsViewModel : ObservableObject
         {
             // Ignore registry errors
         }
+    }
+
+    // Auto-save handlers for toggle switches
+    partial void OnStartWithWindowsChanged(bool value)
+    {
+        if (_isInitializing) return;
+        UpdateWindowsStartup(value);
+        _ = AutoSaveAsync();
+    }
+
+    partial void OnStartMinimizedChanged(bool value)
+    {
+        if (_isInitializing) return;
+        // Update registry if StartWithWindows is enabled
+        if (StartWithWindows)
+        {
+            UpdateWindowsStartup(true);
+        }
+        _ = AutoSaveAsync();
+    }
+
+    partial void OnMinimizeToTrayChanged(bool value)
+    {
+        if (!_isInitializing) _ = AutoSaveAsync();
+    }
+
+    partial void OnAutoMountOnStartupChanged(bool value)
+    {
+        if (!_isInitializing) _ = AutoSaveAsync();
+    }
+
+    partial void OnUnmountOnCloseChanged(bool value)
+    {
+        if (!_isInitializing) _ = AutoSaveAsync();
+    }
+
+    partial void OnShowNotificationsChanged(bool value)
+    {
+        if (!_isInitializing) _ = AutoSaveAsync();
+    }
+
+    partial void OnSelectedThemeIndexChanged(int value)
+    {
+        Theme = (AppTheme)value;
+        if (!_isInitializing)
+        {
+            ApplyTheme(Theme);
+            _ = AutoSaveAsync();
+        }
+    }
+
+    private async Task AutoSaveAsync()
+    {
+        // Don't save during initialization - properties are being loaded from storage
+        if (_isInitializing) return;
+        
+        try
+        {
+            var settings = _configManager.Settings;
+            if (settings != null)
+            {
+                settings.StartMinimized = StartMinimized;
+                settings.MinimizeToTray = MinimizeToTray;
+                settings.StartWithWindows = StartWithWindows;
+                settings.AutoMountOnStartup = AutoMountOnStartup;
+                settings.UnmountOnClose = UnmountOnClose;
+                settings.ShowNotifications = ShowNotifications;
+                settings.Theme = Theme;
+                settings.CustomRclonePath = CustomRclonePath;
+                settings.CacheDirectory = CacheDirectory;
+
+                await _configManager.SaveSettingsAsync();
+            }
+        }
+        catch
+        {
+            // Ignore auto-save errors
+        }
+    }
+
+    private void ApplyTheme(AppTheme theme)
+    {
+        if (App.MainWindowInstance?.Content is Microsoft.UI.Xaml.FrameworkElement rootElement)
+        {
+            rootElement.RequestedTheme = theme switch
+            {
+                AppTheme.Light => Microsoft.UI.Xaml.ElementTheme.Light,
+                AppTheme.Dark => Microsoft.UI.Xaml.ElementTheme.Dark,
+                _ => Microsoft.UI.Xaml.ElementTheme.Default
+            };
+        }
+    }
+
+    [RelayCommand]
+    private async Task ClearCacheAsync()
+    {
+        IsBusy = true;
+        StatusMessage = "Clearing cache...";
+
+        try
+        {
+            var cacheDir = CacheDirectory ?? Path.Combine(_configManager.AppDataPath, "cache");
+            if (Directory.Exists(cacheDir))
+            {
+                var dirInfo = new DirectoryInfo(cacheDir);
+                long totalSize = 0;
+                
+                // Calculate size before deletion
+                foreach (var file in dirInfo.GetFiles("*", SearchOption.AllDirectories))
+                {
+                    totalSize += file.Length;
+                }
+
+                // Delete all files and subdirectories
+                foreach (var file in dirInfo.GetFiles("*", SearchOption.AllDirectories))
+                {
+                    try { file.Delete(); } catch { }
+                }
+                foreach (var dir in dirInfo.GetDirectories())
+                {
+                    try { dir.Delete(true); } catch { }
+                }
+
+                var sizeMb = totalSize / (1024.0 * 1024.0);
+                StatusMessage = $"Cache cleared. Freed {sizeMb:F2} MB";
+            }
+            else
+            {
+                StatusMessage = "Cache directory is empty";
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Failed to clear cache: {ex.Message}";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+
+        await Task.CompletedTask;
     }
 }

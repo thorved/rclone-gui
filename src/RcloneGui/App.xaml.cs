@@ -3,9 +3,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.UI.Xaml;
 using RcloneGui.Services;
 using RcloneGui.ViewModels;
-using RcloneGui.Views;
 using System.Threading;
-using Windows.ApplicationModel.Activation;
 
 namespace RcloneGui;
 
@@ -44,6 +42,7 @@ public partial class App : Application
                 services.AddSingleton<IConfigManager, ConfigManager>();
                 services.AddSingleton<IMountManager, MountManager>();
                 services.AddSingleton<IWinFspManager, WinFspManager>();
+                services.AddSingleton<INotificationService, NotificationService>();
                 
                 // ViewModels
                 services.AddTransient<MainViewModel>();
@@ -70,11 +69,53 @@ public partial class App : Application
         }
 
         _mainWindow = new MainWindow();
-        _mainWindow.Activate();
+        
+        // Apply saved theme on startup
+        ApplyTheme(configManager.Settings?.Theme ?? Models.AppTheme.System);
+        
+        // Check if should start minimized
+        var shouldStartMinimized = ShouldStartMinimized(configManager.Settings);
+        
+        if (shouldStartMinimized)
+        {
+            // Don't activate window, just start in background with tray icon
+            // Window is created but hidden
+        }
+        else
+        {
+            _mainWindow.Activate();
+        }
         
         // Auto-mount configured drives
         var mountManager = Services.GetRequiredService<IMountManager>();
         await mountManager.AutoMountAsync();
+    }
+
+    private static bool ShouldStartMinimized(Models.AppSettings? settings)
+    {
+        // Check command line arguments for --minimized flag
+        var cmdArgs = Environment.GetCommandLineArgs();
+        if (cmdArgs.Any(a => a.Equals("--minimized", StringComparison.OrdinalIgnoreCase)))
+        {
+            return true;
+        }
+        
+        // Check settings (only if StartWithWindows is also enabled, for manual launches respect the setting)
+        return settings?.StartMinimized == true;
+    }
+
+    private static void ApplyTheme(Models.AppTheme theme)
+    {
+        var window = MainWindowInstance;
+        if (window?.Content is Microsoft.UI.Xaml.FrameworkElement rootElement)
+        {
+            rootElement.RequestedTheme = theme switch
+            {
+                Models.AppTheme.Light => Microsoft.UI.Xaml.ElementTheme.Light,
+                Models.AppTheme.Dark => Microsoft.UI.Xaml.ElementTheme.Dark,
+                _ => Microsoft.UI.Xaml.ElementTheme.Default
+            };
+        }
     }
 
     public static void ShowWindow()
@@ -84,26 +125,5 @@ public partial class App : Application
         {
             window.Activate();
         }
-    }
-
-    public static async Task ExitApplicationAsync()
-    {
-        // Unmount all drives gracefully with timeout
-        try
-        {
-            var mountManager = Services.GetRequiredService<IMountManager>();
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-            await mountManager.UnmountAllAsync().WaitAsync(cts.Token);
-        }
-        catch
-        {
-            // Ignore errors during cleanup - proceed with exit
-        }
-        
-        _singleInstanceMutex?.ReleaseMutex();
-        _singleInstanceMutex?.Dispose();
-        
-        // Force terminate the process immediately
-        Environment.Exit(0);
     }
 }

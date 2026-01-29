@@ -42,6 +42,12 @@
                                   OffContent="Drives must be mounted manually"
                                   OnContent="Auto-mount enabled drives on startup"
                                   Margin="0,8,0,0"/>
+                    
+                    <ToggleSwitch Header="Unmount all on exit"
+                                  IsOn="{x:Bind ViewModel.UnmountOnClose, Mode=TwoWay}"
+                                  OffContent="Keep drives mounted when app closes"
+                                  OnContent="Unmount all drives when app exits"
+                                  Margin="0,8,0,0"/>
                 </StackPanel>
             </Grid>
             
@@ -71,7 +77,9 @@
                   CornerRadius="8" Padding="16">
                 <StackPanel>
                     <TextBlock Text="Theme" Style="{StaticResource BodyStrongTextBlockStyle}" Margin="0,0,0,8"/>
-                    <ComboBox x:Name="ThemeCombo" SelectedIndex="0" HorizontalAlignment="Stretch" MaxWidth="300">
+                    <ComboBox x:Name="ThemeCombo" 
+                              SelectedIndex="{x:Bind ViewModel.SelectedThemeIndex, Mode=TwoWay}" 
+                              HorizontalAlignment="Stretch" MaxWidth="300">
                         <ComboBoxItem Content="System default"/>
                         <ComboBoxItem Content="Light"/>
                         <ComboBoxItem Content="Dark"/>
@@ -209,7 +217,7 @@
                                        Margin="0,4,0,0"/>
                         </StackPanel>
                         <Button Grid.Column="1" Content="Export" VerticalAlignment="Center"
-                                Command="{x:Bind ViewModel.ExportConfigCommand}"/>
+                                Click="ExportConfig_Click"/>
                     </Grid>
                     
                     <Border Height="1" 
@@ -229,7 +237,7 @@
                                        Margin="0,4,0,0"/>
                         </StackPanel>
                         <Button Grid.Column="1" Content="Import" VerticalAlignment="Center"
-                                Command="{x:Bind ViewModel.ImportConfigCommand}"/>
+                                Click="ImportConfig_Click"/>
                     </Grid>
                     
                     <Border Height="1" 
@@ -248,7 +256,8 @@
                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                        Margin="0,4,0,0"/>
                         </StackPanel>
-                        <Button Grid.Column="1" Content="Clear Cache" VerticalAlignment="Center"/>
+                        <Button Grid.Column="1" Content="Clear Cache" VerticalAlignment="Center"
+                                Command="{x:Bind ViewModel.ClearCacheCommand}"/>
                     </Grid>
                 </StackPanel>
             </Grid>

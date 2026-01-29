@@ -10,16 +10,18 @@ public class MountManager : IMountManager
 {
     private readonly IRcloneService _rcloneService;
     private readonly IConfigManager _configManager;
+    private readonly INotificationService _notificationService;
     private readonly ConcurrentDictionary<string, MountedDrive> _mounts = new();
 
     public IReadOnlyList<MountedDrive> MountedDrives => _mounts.Values.ToList().AsReadOnly();
 
     public event EventHandler<MountStatusChangedEventArgs>? MountStatusChanged;
 
-    public MountManager(IRcloneService rcloneService, IConfigManager configManager)
+    public MountManager(IRcloneService rcloneService, IConfigManager configManager, INotificationService notificationService)
     {
         _rcloneService = rcloneService;
         _configManager = configManager;
+        _notificationService = notificationService;
     }
 
     public async Task<MountedDrive> MountAsync(SftpConnection connection, string? preferredDriveLetter = null)
@@ -60,12 +62,18 @@ public class MountManager : IMountManager
                 }
 
                 RaiseMountStatusChanged(connection.Id, MountStatus.Mounting, MountStatus.Mounted, driveLetter);
+                
+                // Show notification
+                _notificationService.ShowMountNotification(connection.Name, driveLetter);
             }
             else
             {
                 mountedDrive.Status = MountStatus.Error;
                 mountedDrive.LastError = result.ErrorMessage;
                 RaiseMountStatusChanged(connection.Id, MountStatus.Mounting, MountStatus.Error, driveLetter, result.ErrorMessage);
+                
+                // Show error notification
+                _notificationService.ShowMountErrorNotification(connection.Name, result.ErrorMessage ?? "Unknown error");
             }
         }
         catch (Exception ex)
@@ -73,6 +81,9 @@ public class MountManager : IMountManager
             mountedDrive.Status = MountStatus.Error;
             mountedDrive.LastError = ex.Message;
             RaiseMountStatusChanged(connection.Id, MountStatus.Mounting, MountStatus.Error, driveLetter, ex.Message);
+            
+            // Show error notification
+            _notificationService.ShowMountErrorNotification(connection.Name, ex.Message);
         }
 
         return mountedDrive;
@@ -115,9 +126,16 @@ public class MountManager : IMountManager
             mountedDrive.RcloneProcess = null;
             mountedDrive.MountedAt = null;
             
+            var connectionName = mountedDrive.Connection.Name;
+            var driveLetter = mountedDrive.DriveLetter;
+            
             _mounts.TryRemove(connectionId, out _);
             
-            RaiseMountStatusChanged(connectionId, MountStatus.Unmounting, MountStatus.Unmounted, mountedDrive.DriveLetter);
+            RaiseMountStatusChanged(connectionId, MountStatus.Unmounting, MountStatus.Unmounted, driveLetter);
+            
+            // Show notification
+            _notificationService.ShowUnmountNotification(connectionName, driveLetter);
+            
             return true;
         }
         catch (Exception ex)

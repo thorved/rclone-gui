@@ -189,6 +189,12 @@ public sealed partial class MainWindow : Window
             var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
             Windows.Win32.PInvoke.ShowWindow(new Windows.Win32.Foundation.HWND(hwnd), Windows.Win32.UI.WindowsAndMessaging.SHOW_WINDOW_CMD.SW_HIDE);
         }
+        else
+        {
+            // Not minimizing to tray - perform exit with unmount
+            args.Cancel = true;
+            ExitApplication();
+        }
     }
 
     private void ShowAndActivateWindow()
@@ -201,9 +207,83 @@ public sealed partial class MainWindow : Window
 
     private void ExitApplication()
     {
+        // Show the window first so we can display a dialog
+        ShowAndActivateWindow();
+        
+        // Use dispatcher to show dialog on UI thread
+        DispatcherQueue.TryEnqueue(async () =>
+        {
+            await ShowExitConfirmationAsync();
+        });
+    }
+
+    private async Task ShowExitConfirmationAsync()
+    {
+        var mountManager = App.Services.GetRequiredService<IMountManager>();
+        var mountedDrives = mountManager.MountedDrives;
+        var shouldUnmount = _configManager.Settings?.UnmountOnClose ?? true;
+        
+        string message;
+        if (mountedDrives.Count > 0 && shouldUnmount)
+        {
+            message = $"Closing the application will unmount {mountedDrives.Count} drive(s).\n\nAre you sure you want to exit?";
+        }
+        else if (mountedDrives.Count > 0 && !shouldUnmount)
+        {
+            message = $"You have {mountedDrives.Count} drive(s) mounted. They will remain mounted after exit.\n\nAre you sure you want to exit?";
+        }
+        else
+        {
+            message = "Are you sure you want to exit?";
+        }
+
+        var dialog = new Microsoft.UI.Xaml.Controls.ContentDialog
+        {
+            Title = "Exit Rclone GUI",
+            Content = message,
+            PrimaryButtonText = "Exit",
+            CloseButtonText = "Cancel",
+            DefaultButton = Microsoft.UI.Xaml.Controls.ContentDialogButton.Close,
+            XamlRoot = Content.XamlRoot
+        };
+
+        var result = await dialog.ShowAsync();
+
+        if (result == Microsoft.UI.Xaml.Controls.ContentDialogResult.Primary)
+        {
+            await PerformExitAsync();
+        }
+    }
+
+    private async Task PerformExitAsync()
+    {
         _isClosing = true;
         
-        // Dispose tray icon first
+        var shouldUnmount = _configManager.Settings?.UnmountOnClose ?? true;
+        
+        if (shouldUnmount)
+        {
+            try
+            {
+                var mountManager = App.Services.GetRequiredService<IMountManager>();
+                var mountedDrives = mountManager.MountedDrives;
+                
+                if (mountedDrives.Count > 0)
+                {
+                    // Show a progress message while unmounting
+                    // Update UI to show we're unmounting
+                    
+                    // Unmount all drives
+                    await mountManager.UnmountAllAsync();
+                }
+            }
+            catch
+            {
+                // Ignore cleanup errors
+            }
+        }
+        
+        // Dispose tray icon
         try
         {
             TrayIcon.Dispose();
@@ -213,24 +293,8 @@ public sealed partial class MainWindow : Window
             // Ignore disposal errors
         }
         
-        // Fire and forget the cleanup, then force exit
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                var mountManager = App.Services.GetRequiredService<IMountManager>();
-                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
-                await mountManager.UnmountAllAsync().WaitAsync(cts.Token);
-            }
-            catch
-            {
-                // Ignore cleanup errors
-            }
-            finally
-            {
-                Environment.Exit(0);
-            }
-        });
+        // Exit the application
+        Environment.Exit(0);
     }
 
     public void NavigateToAddConnection(Models.SftpConnection? connectionToEdit = null)

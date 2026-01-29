@@ -51,4 +51,37 @@ public sealed partial class SettingsView : Page
             ViewModel.CacheDirectory = folder.Path;
         }
     }
+
+    private async void ExportConfig_Click(object sender, RoutedEventArgs e)
+    {
+        var picker = new FileSavePicker();
+        picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
+        picker.FileTypeChoices.Add("JSON Configuration", new[] { ".json" });
+        picker.SuggestedFileName = $"rclonegui_config_{DateTime.Now:yyyyMMdd_HHmmss}";
+        
+        var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindowInstance);
+        WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
+        
+        var file = await picker.PickSaveFileAsync();
+        if (file != null)
+        {
+            await ViewModel.ExportConfigToPathAsync(file.Path);
+        }
+    }
+
+    private async void ImportConfig_Click(object sender, RoutedEventArgs e)
+    {
+        var picker = new FileOpenPicker();
+        picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
+        picker.FileTypeFilter.Add(".json");
+        
+        var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindowInstance);
+        WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
+        
+        var file = await picker.PickSingleFileAsync();
+        if (file != null)
+        {
+            await ViewModel.ImportConfigFromPathAsync(file.Path);
+        }
+    }
 }

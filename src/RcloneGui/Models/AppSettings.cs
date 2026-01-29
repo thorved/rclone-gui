@@ -26,6 +26,11 @@ public class AppSettings
     public bool AutoMountOnStartup { get; set; } = true;
 
     /// <summary>
+    /// Whether to unmount all drives when application exits.
+    /// </summary>
+    public bool UnmountOnClose { get; set; } = true;
+
+    /// <summary>
     /// Whether to show notifications for mount events.
     /// </summary>
     public bool ShowNotifications { get; set; } = true;

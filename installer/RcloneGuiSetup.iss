@@ -50,7 +50,7 @@ Name: "startupicon"; Description: "Start {#MyAppName} when Windows starts"; Grou
 Source: "..\binary\winfsp-2.0.23075.msi"; DestDir: "{tmp}"; Flags: ignoreversion deleteafterinstall; Check: not IsWinFspInstalled
 
 ; Main application files (from Release build output)
-Source: "..\src\RcloneGui\bin\x64\Release\net9.0-windows10.0.22621.0\win-x64\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\src\RcloneGui\bin\x64\Release\net8.0-windows10.0.19041.0\win-x64\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 ; Note: rclone.exe is already included in build output via csproj Content Include
 

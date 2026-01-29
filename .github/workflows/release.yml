@@ -12,13 +12,13 @@ permissions:
   contents: write
 
 env:
-  DOTNET_VERSION: '9.0.x'
+  DOTNET_VERSION: '8.0.x'
   SOLUTION_PATH: 'src/RcloneGui.sln'
   PROJECT_PATH: 'src/RcloneGui/RcloneGui.csproj'
   BUILD_CONFIGURATION: 'Release'
   BUILD_PLATFORM: 'x64'
   RUNTIME_IDENTIFIER: 'win-x64'
-  TARGET_FRAMEWORK: 'net9.0-windows10.0.22621.0'
+  TARGET_FRAMEWORK: 'net8.0-windows10.0.19041.0'
 
 jobs:
   build-and-release:
@@ -32,6 +32,9 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
+    
+    - name: Add MSBuild to PATH
+      uses: microsoft/setup-msbuild@v2
         
     - name: Verify .NET version
       shell: pwsh
@@ -44,7 +47,7 @@ jobs:
       run: |
         $globalJson = @{
           sdk = @{
-            version = "9.0.100"
+            version = "8.0.100"
             rollForward = "latestFeature"
           }
         } | ConvertTo-Json -Depth 3
@@ -95,15 +98,16 @@ jobs:
       
     - name: Build
       run: |
-        dotnet publish ${{ env.PROJECT_PATH }} `
-          --configuration ${{ env.BUILD_CONFIGURATION }} `
-          --framework ${{ env.TARGET_FRAMEWORK }} `
-          --runtime ${{ env.RUNTIME_IDENTIFIER }} `
-          --self-contained true `
-          -p:Platform=${{ env.BUILD_PLATFORM }} `
-          -p:PublishSingleFile=false `
-          -p:PublishReadyToRun=true `
-          --output src/RcloneGui/bin/${{ env.BUILD_PLATFORM }}/${{ env.BUILD_CONFIGURATION }}/${{ env.TARGET_FRAMEWORK }}/${{ env.RUNTIME_IDENTIFIER }}
+        msbuild ${{ env.PROJECT_PATH }} `
+          /t:Publish `
+          /p:Configuration=${{ env.BUILD_CONFIGURATION }} `
+          /p:TargetFramework=${{ env.TARGET_FRAMEWORK }} `
+          /p:RuntimeIdentifier=${{ env.RUNTIME_IDENTIFIER }} `
+          /p:SelfContained=true `
+          /p:Platform=${{ env.BUILD_PLATFORM }} `
+          /p:PublishSingleFile=false `
+          /p:PublishReadyToRun=true `
+          /p:PublishDir=bin\${{ env.BUILD_PLATFORM }}\${{ env.BUILD_CONFIGURATION }}\${{ env.TARGET_FRAMEWORK }}\${{ env.RUNTIME_IDENTIFIER }}\
       shell: pwsh
         
     - name: Verify build output

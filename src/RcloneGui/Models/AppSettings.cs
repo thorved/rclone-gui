@@ -1,0 +1,62 @@
+namespace RcloneGui.Models;
+
+/// <summary>
+/// Application-wide settings.
+/// </summary>
+public class AppSettings
+{
+    /// <summary>
+    /// Whether to start the application minimized to system tray.
+    /// </summary>
+    public bool StartMinimized { get; set; } = false;
+
+    /// <summary>
+    /// Whether to minimize to tray instead of closing.
+    /// </summary>
+    public bool MinimizeToTray { get; set; } = true;
+
+    /// <summary>
+    /// Whether to start with Windows.
+    /// </summary>
+    public bool StartWithWindows { get; set; } = false;
+
+    /// <summary>
+    /// Whether to auto-mount connections on startup.
+    /// </summary>
+    public bool AutoMountOnStartup { get; set; } = true;
+
+    /// <summary>
+    /// Whether to show notifications for mount events.
+    /// </summary>
+    public bool ShowNotifications { get; set; } = true;
+
+    /// <summary>
+    /// Theme setting: System, Light, or Dark.
+    /// </summary>
+    public AppTheme Theme { get; set; } = AppTheme.System;
+
+    /// <summary>
+    /// Path to custom rclone executable (empty = use bundled).
+    /// </summary>
+    public string? CustomRclonePath { get; set; }
+
+    /// <summary>
+    /// Default VFS cache location.
+    /// </summary>
+    public string? CacheDirectory { get; set; }
+
+    /// <summary>
+    /// List of configured SFTP connections.
+    /// </summary>
+    public List<SftpConnection> Connections { get; set; } = new();
+}
+
+/// <summary>
+/// Application theme options.
+/// </summary>
+public enum AppTheme
+{
+    System,
+    Light,
+    Dark
+}

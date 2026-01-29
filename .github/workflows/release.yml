@@ -85,7 +85,7 @@ jobs:
       shell: pwsh
       run: |
         $version = "${{ github.event.inputs.version }}"
-        $xamlPath = "src/RcloneGui/Views/SettingsView.xaml"
+        $xamlPath = "src/RcloneGui/Features/Dashboard/Views/SettingsView.xaml"
         
         $content = Get-Content $xamlPath -Raw
         $content = $content -replace 'Text="Version .*?"', "Text=`"Version $version`""

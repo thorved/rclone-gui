@@ -17,7 +17,7 @@
     <AppxPackage>false</AppxPackage>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <Version>1.0.0</Version>
+    <Version>0.0.1</Version>
     <AssemblyName>RcloneGui</AssemblyName>
     <Product>Rclone GUI - SFTP Drive Mounter</Product>
     <Company>thorved</Company>

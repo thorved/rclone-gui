@@ -1,0 +1,154 @@
+name: Build and Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (e.g., 0.0.1, 1.0.0)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+env:
+  DOTNET_VERSION: '9.0.x'
+  SOLUTION_PATH: 'src/RcloneGui.sln'
+  PROJECT_PATH: 'src/RcloneGui/RcloneGui.csproj'
+  BUILD_CONFIGURATION: 'Release'
+  BUILD_PLATFORM: 'x64'
+  RUNTIME_IDENTIFIER: 'win-x64'
+  TARGET_FRAMEWORK: 'net9.0-windows10.0.22621.0'
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+        
+    - name: Update version in csproj
+      shell: pwsh
+      run: |
+        $version = "${{ github.event.inputs.version }}"
+        $csprojPath = "${{ env.PROJECT_PATH }}"
+        
+        $content = Get-Content $csprojPath -Raw
+        $content = $content -replace '<Version>.*?</Version>', "<Version>$version</Version>"
+        $content = $content -replace '<FileVersion>.*?</FileVersion>', "<FileVersion>$version</FileVersion>"
+        $content = $content -replace '<AssemblyVersion>.*?</AssemblyVersion>', "<AssemblyVersion>$version</AssemblyVersion>"
+        Set-Content $csprojPath $content
+        
+        Write-Host "Updated version to $version in $csprojPath"
+        
+    - name: Update version in Inno Setup script
+      shell: pwsh
+      run: |
+        $version = "${{ github.event.inputs.version }}"
+        $issPath = "installer/RcloneGuiSetup.iss"
+        
+        $content = Get-Content $issPath -Raw
+        $content = $content -replace '#define MyAppVersion ".*?"', "#define MyAppVersion `"$version`""
+        Set-Content $issPath $content
+        
+        Write-Host "Updated version to $version in $issPath"
+        
+    - name: Update version in SettingsView.xaml
+      shell: pwsh
+      run: |
+        $version = "${{ github.event.inputs.version }}"
+        $xamlPath = "src/RcloneGui/Views/SettingsView.xaml"
+        
+        $content = Get-Content $xamlPath -Raw
+        $content = $content -replace 'Text="Version .*?"', "Text=`"Version $version`""
+        Set-Content $xamlPath $content
+        
+        Write-Host "Updated version to $version in $xamlPath"
+        
+    - name: Restore dependencies
+      run: dotnet restore ${{ env.SOLUTION_PATH }}
+      
+    - name: Build
+      run: |
+        dotnet publish ${{ env.PROJECT_PATH }} `
+          --configuration ${{ env.BUILD_CONFIGURATION }} `
+          --runtime ${{ env.RUNTIME_IDENTIFIER }} `
+          --self-contained true `
+          -p:Platform=${{ env.BUILD_PLATFORM }} `
+          -p:PublishSingleFile=false `
+          -p:PublishReadyToRun=true `
+          --output src/RcloneGui/bin/${{ env.BUILD_PLATFORM }}/${{ env.BUILD_CONFIGURATION }}/${{ env.TARGET_FRAMEWORK }}/${{ env.RUNTIME_IDENTIFIER }}
+      shell: pwsh
+        
+    - name: Verify build output
+      shell: pwsh
+      run: |
+        $buildOutput = "src/RcloneGui/bin/${{ env.BUILD_PLATFORM }}/${{ env.BUILD_CONFIGURATION }}/${{ env.TARGET_FRAMEWORK }}/${{ env.RUNTIME_IDENTIFIER }}"
+        Write-Host "Build output directory: $buildOutput"
+        
+        if (Test-Path $buildOutput) {
+          Write-Host "Build output exists"
+          Get-ChildItem $buildOutput -Recurse | Select-Object FullName, Length | Format-Table -AutoSize
+        } else {
+          Write-Error "Build output directory does not exist!"
+          exit 1
+        }
+        
+        $exePath = Join-Path $buildOutput "RcloneGui.exe"
+        if (Test-Path $exePath) {
+          Write-Host "RcloneGui.exe found at $exePath"
+        } else {
+          Write-Error "RcloneGui.exe not found!"
+          exit 1
+        }
+        
+    - name: Install Inno Setup
+      shell: pwsh
+      run: |
+        choco install innosetup -y
+        
+    - name: Build Installer
+      shell: pwsh
+      run: |
+        $env:PATH += ";C:\Program Files (x86)\Inno Setup 6"
+        
+        # Create output directory
+        New-Item -ItemType Directory -Force -Path "installer/output"
+        
+        # Build the installer
+        iscc "installer/RcloneGuiSetup.iss"
+        
+        # List output
+        Write-Host "Installer output:"
+        Get-ChildItem "installer/output" | Format-Table -AutoSize
+        
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: v${{ github.event.inputs.version }}
+        name: Rclone GUI v${{ github.event.inputs.version }}
+        body: |
+          ## Rclone GUI v${{ github.event.inputs.version }}
+          
+          ### Installation
+          1. Download `RcloneGui-Setup-${{ github.event.inputs.version }}.exe`
+          2. Run the installer
+          3. The installer will automatically install WinFsp if not already present
+          
+          ### Requirements
+          - Windows 10 version 1809 or later (x64)
+          - WinFsp (bundled with installer)
+          
+          ### Changes
+          See [CHANGELOG](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details.
+        files: |
+          installer/output/RcloneGui-Setup-${{ github.event.inputs.version }}.exe
+        draft: false
+        prerelease: ${{ contains(github.event.inputs.version, '-') }}
+        make_latest: true

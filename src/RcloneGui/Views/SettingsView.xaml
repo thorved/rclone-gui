@@ -269,7 +269,7 @@
                   CornerRadius="8" Padding="16">
                 <StackPanel>
                     <TextBlock Text="Rclone GUI" Style="{StaticResource SubtitleTextBlockStyle}"/>
-                    <TextBlock Text="Version 1.0.0"
+                    <TextBlock Text="Version 0.0.1"
                                Style="{StaticResource CaptionTextBlockStyle}"
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                Margin="0,4,0,0"/>

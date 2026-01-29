@@ -16,7 +16,7 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         
-        <ScrollViewer Grid.Row="0" MaxHeight="400" VerticalScrollBarVisibility="Auto">
+        <ScrollViewer Grid.Row="0" MaxHeight="400" VerticalScrollBarVisibility="Auto" Padding="0,0,16,0">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>

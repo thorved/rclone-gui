@@ -11,7 +11,7 @@
         <converters:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibility"/>
     </Page.Resources>
     
-    <ScrollViewer>
+    <ScrollViewer Padding="0,0,16,0">
         <StackPanel Padding="24" MaxWidth="800" HorizontalAlignment="Left">
             <!-- Header -->
             <TextBlock Text="Settings" Style="{StaticResource TitleTextBlockStyle}"/>

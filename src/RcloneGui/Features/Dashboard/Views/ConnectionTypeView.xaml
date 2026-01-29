@@ -6,7 +6,7 @@
     xmlns:local="using:RcloneGui.Features.Dashboard.Views"
     NavigationCacheMode="Disabled">
     
-    <ScrollViewer>
+    <ScrollViewer Padding="0,0,16,0">
         <StackPanel Padding="24" MaxWidth="600" HorizontalAlignment="Left">
             <!-- Header -->
             <TextBlock Text="Add Connection" Style="{StaticResource TitleTextBlockStyle}"/>

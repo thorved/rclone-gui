@@ -84,10 +84,10 @@
                             
                             <!-- Drive Info -->
                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                <TextBlock Text="{x:Bind Connection.Name, Mode=OneWay}" 
+                                <TextBlock Text="{x:Bind Name, Mode=OneWay}" 
                                            Style="{StaticResource BodyStrongTextBlockStyle}"/>
                                 <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-                                    <TextBlock Text="{x:Bind Connection.Host, Mode=OneWay}"
+                                    <TextBlock Text="{x:Bind Host, Mode=OneWay}"
                                                Style="{StaticResource CaptionTextBlockStyle}"
                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                                     <TextBlock Text=" • " 

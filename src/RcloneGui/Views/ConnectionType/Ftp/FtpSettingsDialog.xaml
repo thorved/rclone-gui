@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ContentDialog
+    x:Class="RcloneGui.Views.ConnectionType.Ftp.FtpSettingsDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:RcloneGui.Views.ConnectionType.Ftp"
+    xmlns:converters="using:RcloneGui.Converters"
+    Title="Edit FTP Connection"
+    PrimaryButtonText="Save"
+    SecondaryButtonText="Cancel"
+    DefaultButton="Primary"
+    Width="600">
+    
+    <ContentDialog.Resources>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibility"/>
+        <converters:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibility"/>
+        <converters:BoolToSeverityConverter x:Key="BoolToSeverityConverter"/>
+    </ContentDialog.Resources>
+    
+    <Grid Width="550">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        
+        <!-- Left Column - Connection -->
+        <StackPanel Grid.Column="0" Spacing="8" Margin="0,0,12,0">
+            <TextBlock Text="Connection" Style="{StaticResource BodyStrongTextBlockStyle}"/>
+            
+            <TextBox Header="Name" PlaceholderText="My FTP Server"
+                     Text="{x:Bind ViewModel.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+            
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="80"/>
+                </Grid.ColumnDefinitions>
+                
+                <TextBox Header="Host" PlaceholderText="ftp.example.com" Margin="0,0,8,0"
+                         Text="{x:Bind ViewModel.Host, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                
+                <NumberBox Grid.Column="1" Header="Port" Value="{x:Bind ViewModel.Port, Mode=TwoWay}"
+                           Minimum="1" Maximum="65535" SpinButtonPlacementMode="Hidden"/>
+            </Grid>
+            
+            <!-- Anonymous Checkbox -->
+            <CheckBox Content="Anonymous connection"
+                     IsChecked="{x:Bind ViewModel.IsAnonymous, Mode=TwoWay}"
+                     Checked="AnonymousCheckBox_Checked"
+                     Unchecked="AnonymousCheckBox_Unchecked"/>
+            
+            <StackPanel x:Name="AuthPanel" Spacing="8">
+                <TextBox Header="Username" PlaceholderText="username"
+                         Text="{x:Bind ViewModel.Username, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                
+                <PasswordBox Header="Password (leave empty to keep current)" PlaceholderText="Enter new password"
+                             Password="{x:Bind ViewModel.Password, Mode=TwoWay}"/>
+            </StackPanel>
+            
+            <ComboBox Header="TLS/SSL Mode" 
+                      ItemsSource="{x:Bind ViewModel.TlsModes, Mode=OneWay}"
+                      SelectedItem="{x:Bind ViewModel.TlsMode, Mode=TwoWay}"
+                      HorizontalAlignment="Stretch"/>
+            
+            <CheckBox Content="Use passive mode"
+                     IsChecked="{x:Bind ViewModel.PassiveMode, Mode=TwoWay}"/>
+        </StackPanel>
+        
+        <!-- Right Column - Mount Settings -->
+        <StackPanel Grid.Column="1" Spacing="8" Margin="12,0,0,0">
+            <TextBlock Text="Mount Settings" Style="{StaticResource BodyStrongTextBlockStyle}"/>
+            
+            <TextBox Header="Remote Path" PlaceholderText="/ or /public_html"
+                     Text="{x:Bind ViewModel.RemotePath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+            
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="80"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                
+                <ComboBox Header="Drive" ItemsSource="{x:Bind ViewModel.AvailableDriveLetters, Mode=OneWay}"
+                          SelectedItem="{x:Bind ViewModel.SelectedDriveLetter, Mode=TwoWay}"
+                          HorizontalAlignment="Stretch" Margin="0,0,8,0"/>
+                
+                <TextBox Grid.Column="1" Header="Volume Name" PlaceholderText="FTP Drive"
+                         Text="{x:Bind ViewModel.VolumeName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+            </Grid>
+            
+            <StackPanel Spacing="4" Margin="0,8,0,0">
+                <CheckBox Content="Read-only" IsChecked="{x:Bind ViewModel.ReadOnly, Mode=TwoWay}"/>
+                <CheckBox Content="Network drive" IsChecked="{x:Bind ViewModel.NetworkMode, Mode=TwoWay}"/>
+                <CheckBox Content="Auto-mount on startup" IsChecked="{x:Bind ViewModel.AutoMount, Mode=TwoWay}"/>
+            </StackPanel>
+            
+            <!-- Status -->
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,8,0,0">
+                <ProgressRing IsActive="{x:Bind ViewModel.IsTesting, Mode=OneWay}" Width="16" Height="16"
+                              Visibility="{x:Bind ViewModel.IsTesting, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"/>
+                
+                <InfoBar IsOpen="{x:Bind ViewModel.TestResult, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                         Severity="{x:Bind ViewModel.TestSuccess, Mode=OneWay, Converter={StaticResource BoolToSeverityConverter}}"
+                         Message="{x:Bind ViewModel.TestResult, Mode=OneWay}" IsClosable="False" IsIconVisible="True"
+                         Margin="8,0,0,0" Padding="8,4"/>
+            </StackPanel>
+            
+            <Button Content="Test Connection" Command="{x:Bind ViewModel.TestConnectionCommand}"
+                    HorizontalAlignment="Stretch" Margin="0,8,0,0"/>
+        </StackPanel>
+    </Grid>
+</ContentDialog>

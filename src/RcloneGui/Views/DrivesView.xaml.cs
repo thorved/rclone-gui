@@ -4,8 +4,10 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
+using RcloneGui.Models;
 using RcloneGui.ViewModels;
 using RcloneGui.Views.ConnectionType.Sftp;
+using RcloneGui.Views.ConnectionType.Ftp;
 
 namespace RcloneGui.Views;
 
@@ -39,18 +41,31 @@ public sealed partial class DrivesView : Page
         // Get DriveItemViewModel directly from the Button's Tag
         if (sender is Button button && button.Tag is DriveItemViewModel driveVm)
         {
-            System.Diagnostics.Debug.WriteLine($"Settings clicked for: {driveVm.Connection.Name}, Id: {driveVm.Connection.Id}");
+            var connectionName = driveVm.Name;
+            var connectionId = driveVm.Connection is SftpConnection sftp ? sftp.Id : (driveVm.Connection as FtpConnection)?.Id ?? "Unknown";
+            System.Diagnostics.Debug.WriteLine($"Settings clicked for: {connectionName}, Id: {connectionId}");
             
-            var dialog = new SftpSettingsDialog();
-            dialog.XamlRoot = this.XamlRoot;
-            dialog.LoadConnection(driveVm.Connection);
+            bool? success = null;
             
-            var result = await dialog.ShowAsync();
+            if (driveVm.IsSftp && driveVm.SftpConnection is SftpConnection sftpConn)
+            {
+                var dialog = new SftpSettingsDialog();
+                dialog.XamlRoot = this.XamlRoot;
+                dialog.LoadConnection(sftpConn);
+                var result = await dialog.ShowAsync();
+                success = result == ContentDialogResult.Primary;
+            }
+            else if (driveVm.IsFtp && driveVm.FtpConnection is FtpConnection ftpConn)
+            {
+                var dialog = new FtpSettingsDialog(ftpConn);
+                dialog.XamlRoot = this.XamlRoot;
+                success = await dialog.ShowAsync();
+            }
             
-            if (result == ContentDialogResult.Primary)
+            if (success == true)
             {
                 // Refresh drives after saving
-                await ViewModel.RefreshDrivesCommand.ExecuteAsync(null);
+                await ViewModel.RefreshDrivesAsync();
             }
         }
         else

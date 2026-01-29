@@ -48,6 +48,31 @@ public interface IConfigManager
     IReadOnlyList<SftpConnection> GetConnections();
 
     /// <summary>
+    /// Adds a new FTP connection.
+    /// </summary>
+    Task AddFtpConnectionAsync(FtpConnection connection);
+
+    /// <summary>
+    /// Updates an existing FTP connection.
+    /// </summary>
+    Task UpdateFtpConnectionAsync(FtpConnection connection);
+
+    /// <summary>
+    /// Deletes an FTP connection.
+    /// </summary>
+    Task DeleteFtpConnectionAsync(string connectionId);
+
+    /// <summary>
+    /// Gets an FTP connection by ID.
+    /// </summary>
+    FtpConnection? GetFtpConnection(string connectionId);
+
+    /// <summary>
+    /// Gets all configured FTP connections.
+    /// </summary>
+    IReadOnlyList<FtpConnection> GetFtpConnections();
+
+    /// <summary>
     /// Exports configuration to a file.
     /// </summary>
     Task<bool> ExportConfigAsync(string filePath, bool includePasswords = false);

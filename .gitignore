@@ -67,3 +67,5 @@ installer/output/
 
 # Publish output
 **/bin/publish/
+
+nul

@@ -47,6 +47,7 @@ public partial class App : Application
                 // ViewModels
                 services.AddTransient<MainViewModel>();
                 services.AddTransient<AddConnectionViewModel>();
+                services.AddTransient<AddFtpConnectionViewModel>();
                 services.AddTransient<SettingsViewModel>();
                 services.AddTransient<DriveItemViewModel>();
             })

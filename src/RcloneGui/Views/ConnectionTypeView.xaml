@@ -173,22 +173,22 @@
                     </StackPanel>
                 </Button>
                 
-                <!-- FTP Card (Disabled) -->
+                <!-- FTP Card -->
                 <Button x:Name="FtpCard" 
                         Grid.Column="2" Grid.Row="1"
                         HorizontalAlignment="Stretch" 
                         VerticalAlignment="Stretch"
                         Padding="16"
                         Margin="8,8,0,0"
-                        IsEnabled="False">
+                        Click="FtpCard_Click">
                     <StackPanel HorizontalAlignment="Center">
                         <Grid Width="48" Height="48" 
                               CornerRadius="8"
-                              Background="{ThemeResource SystemFillColorNeutralBrush}"
+                              Background="{ThemeResource AccentFillColorDefaultBrush}"
                               HorizontalAlignment="Center">
                             <FontIcon Glyph="&#xE8B7;" 
                                       FontSize="24" 
-                                      Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                      Foreground="White"
                                       HorizontalAlignment="Center"
                                       VerticalAlignment="Center"/>
                         </Grid>
@@ -196,10 +196,6 @@
                                    Style="{StaticResource BodyStrongTextBlockStyle}"
                                    HorizontalAlignment="Center"
                                    Margin="0,8,0,0"/>
-                        <TextBlock Text="Soon" 
-                                   Style="{StaticResource CaptionTextBlockStyle}"
-                                   Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                   HorizontalAlignment="Center"/>
                     </StackPanel>
                 </Button>
             </Grid>

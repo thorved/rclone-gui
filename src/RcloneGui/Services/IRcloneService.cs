@@ -28,6 +28,11 @@ public interface IRcloneService
     Task<bool> CreateSftpRemoteAsync(SftpConnection connection);
 
     /// <summary>
+    /// Creates an FTP remote configuration in rclone.
+    /// </summary>
+    Task<bool> CreateFtpRemoteAsync(FtpConnection connection);
+
+    /// <summary>
     /// Deletes a remote configuration from rclone.
     /// </summary>
     Task<bool> DeleteRemoteAsync(string remoteName);
@@ -38,14 +43,24 @@ public interface IRcloneService
     Task<(bool Success, string Message)> TestConnectionAsync(SftpConnection connection);
 
     /// <summary>
+    /// Tests connection to an FTP server.
+    /// </summary>
+    Task<(bool Success, string Message)> TestFtpConnectionAsync(FtpConnection connection);
+
+    /// <summary>
     /// Lists all configured remotes.
     /// </summary>
     Task<List<string>> ListRemotesAsync();
 
     /// <summary>
-    /// Mounts a remote to a drive letter.
+    /// Mounts an SFTP remote to a drive letter.
     /// </summary>
     Task<MountResult> MountAsync(SftpConnection connection, string driveLetter, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Mounts an FTP remote to a drive letter.
+    /// </summary>
+    Task<MountResult> MountAsync(FtpConnection connection, string driveLetter, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Unmounts a drive.

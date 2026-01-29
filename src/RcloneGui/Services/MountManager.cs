@@ -26,14 +26,27 @@ public class MountManager : IMountManager
 
     public async Task<MountedDrive> MountAsync(SftpConnection connection, string? preferredDriveLetter = null)
     {
+        return await MountInternalAsync(connection, preferredDriveLetter, async (c, d) => await _rcloneService.MountAsync(c, d));
+    }
+
+    public async Task<MountedDrive> MountAsync(FtpConnection connection, string? preferredDriveLetter = null)
+    {
+        return await MountInternalAsync(connection, preferredDriveLetter, async (c, d) => await _rcloneService.MountAsync(c, d));
+    }
+
+    private async Task<MountedDrive> MountInternalAsync<T>(T connection, string? preferredDriveLetter, Func<T, string, Task<MountResult>> mountFunc) where T : class
+    {
         // Determine drive letter
-        var driveLetter = preferredDriveLetter ?? connection.MountSettings.DriveLetter;
+        var driveLetter = preferredDriveLetter ?? GetMountSettings(connection)?.DriveLetter;
         
         if (string.IsNullOrEmpty(driveLetter))
         {
             var available = _rcloneService.GetAvailableDriveLetters();
             driveLetter = available.FirstOrDefault() ?? throw new InvalidOperationException("No available drive letters");
         }
+
+        var connectionId = GetConnectionId(connection);
+        var connectionName = GetConnectionName(connection);
 
         var mountedDrive = new MountedDrive
         {
@@ -42,12 +55,12 @@ public class MountManager : IMountManager
             Status = MountStatus.Mounting
         };
 
-        _mounts[connection.Id] = mountedDrive;
-        RaiseMountStatusChanged(connection.Id, MountStatus.Unmounted, MountStatus.Mounting, driveLetter);
+        _mounts[connectionId] = mountedDrive;
+        RaiseMountStatusChanged(connectionId, MountStatus.Unmounted, MountStatus.Mounting, driveLetter);
 
         try
         {
-            var result = await _rcloneService.MountAsync(connection, driveLetter);
+            var result = await mountFunc(connection, driveLetter);
 
             if (result.Success)
             {
@@ -58,35 +71,65 @@ public class MountManager : IMountManager
                 // Monitor process for unexpected exit
                 if (result.Process != null)
                 {
-                    _ = MonitorProcessAsync(connection.Id, result.Process);
+                    _ = MonitorProcessAsync(connectionId, result.Process);
                 }
 
-                RaiseMountStatusChanged(connection.Id, MountStatus.Mounting, MountStatus.Mounted, driveLetter);
+                RaiseMountStatusChanged(connectionId, MountStatus.Mounting, MountStatus.Mounted, driveLetter);
                 
                 // Show notification
-                _notificationService.ShowMountNotification(connection.Name, driveLetter);
+                _notificationService.ShowMountNotification(connectionName, driveLetter);
             }
             else
             {
                 mountedDrive.Status = MountStatus.Error;
                 mountedDrive.LastError = result.ErrorMessage;
-                RaiseMountStatusChanged(connection.Id, MountStatus.Mounting, MountStatus.Error, driveLetter, result.ErrorMessage);
+                RaiseMountStatusChanged(connectionId, MountStatus.Mounting, MountStatus.Error, driveLetter, result.ErrorMessage);
                 
                 // Show error notification
-                _notificationService.ShowMountErrorNotification(connection.Name, result.ErrorMessage ?? "Unknown error");
+                _notificationService.ShowMountErrorNotification(connectionName, result.ErrorMessage ?? "Unknown error");
             }
         }
         catch (Exception ex)
         {
             mountedDrive.Status = MountStatus.Error;
             mountedDrive.LastError = ex.Message;
-            RaiseMountStatusChanged(connection.Id, MountStatus.Mounting, MountStatus.Error, driveLetter, ex.Message);
+            RaiseMountStatusChanged(connectionId, MountStatus.Mounting, MountStatus.Error, driveLetter, ex.Message);
             
             // Show error notification
-            _notificationService.ShowMountErrorNotification(connection.Name, ex.Message);
+            _notificationService.ShowMountErrorNotification(connectionName, ex.Message);
         }
 
         return mountedDrive;
+    }
+
+    private static string GetConnectionId(object connection)
+    {
+        return connection switch
+        {
+            SftpConnection sftp => sftp.Id,
+            FtpConnection ftp => ftp.Id,
+            _ => throw new ArgumentException("Unknown connection type")
+        };
+    }
+
+    private static string GetConnectionName(object connection)
+    {
+        return connection switch
+        {
+            SftpConnection sftp => sftp.Name,
+            FtpConnection ftp => ftp.Name,
+            _ => throw new ArgumentException("Unknown connection type")
+        };
+    }
+
+    private static MountSettings? GetMountSettings(object connection)
+    {
+        return connection switch
+        {
+            SftpConnection sftp => sftp.MountSettings,
+            FtpConnection ftp => ftp.MountSettings,
+            _ => null
+        };
     }
 
     public async Task<bool> UnmountAsync(string connectionId)
@@ -126,7 +169,7 @@ public class MountManager : IMountManager
             mountedDrive.RcloneProcess = null;
             mountedDrive.MountedAt = null;
             
-            var connectionName = mountedDrive.Connection.Name;
+            var connectionName = mountedDrive.ConnectionName;
             var driveLetter = mountedDrive.DriveLetter;
             
             _mounts.TryRemove(connectionId, out _);
@@ -163,11 +206,29 @@ public class MountManager : IMountManager
             return;
         }
 
-        var connections = _configManager.GetConnections()
+        // Auto-mount SFTP connections
+        var sftpConnections = _configManager.GetConnections()
             .Where(c => c.AutoMount)
             .ToList();
 
-        foreach (var connection in connections)
+        foreach (var connection in sftpConnections)
+        {
+            try
+            {
+                await MountAsync(connection);
+            }
+            catch
+            {
+                // Log but continue with other mounts
+            }
+        }
+
+        // Auto-mount FTP connections
+        var ftpConnections = _configManager.GetFtpConnections()
+            .Where(c => c.AutoMount)
+            .ToList();
+
+        foreach (var connection in ftpConnections)
         {
             try
             {

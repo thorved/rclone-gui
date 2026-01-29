@@ -18,9 +18,14 @@ public interface IMountManager
     event EventHandler<MountStatusChangedEventArgs>? MountStatusChanged;
 
     /// <summary>
-    /// Mounts a connection to a drive.
+    /// Mounts an SFTP connection to a drive.
     /// </summary>
     Task<MountedDrive> MountAsync(SftpConnection connection, string? preferredDriveLetter = null);
+
+    /// <summary>
+    /// Mounts an FTP connection to a drive.
+    /// </summary>
+    Task<MountedDrive> MountAsync(FtpConnection connection, string? preferredDriveLetter = null);
 
     /// <summary>
     /// Unmounts a drive.

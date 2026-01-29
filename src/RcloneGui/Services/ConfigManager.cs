@@ -81,6 +81,7 @@ public class ConfigManager : IConfigManager
         try
         {
             _settings.Connections.ForEach(c => c.ModifiedAt = DateTime.UtcNow);
+            _settings.FtpConnections.ForEach(c => c.ModifiedAt = DateTime.UtcNow);
             var json = JsonSerializer.Serialize(_settings, JsonOptions);
             await File.WriteAllTextAsync(_settingsFilePath, json);
         }
@@ -131,6 +132,47 @@ public class ConfigManager : IConfigManager
         return _settings?.Connections.AsReadOnly() ?? new List<SftpConnection>().AsReadOnly();
     }
 
+    public async Task AddFtpConnectionAsync(FtpConnection connection)
+    {
+        if (_settings == null) return;
+
+        connection.CreatedAt = DateTime.UtcNow;
+        connection.ModifiedAt = DateTime.UtcNow;
+        _settings.FtpConnections.Add(connection);
+        await SaveSettingsAsync();
+    }
+
+    public async Task UpdateFtpConnectionAsync(FtpConnection connection)
+    {
+        if (_settings == null) return;
+
+        var index = _settings.FtpConnections.FindIndex(c => c.Id == connection.Id);
+        if (index >= 0)
+        {
+            connection.ModifiedAt = DateTime.UtcNow;
+            _settings.FtpConnections[index] = connection;
+            await SaveSettingsAsync();
+        }
+    }
+
+    public async Task DeleteFtpConnectionAsync(string connectionId)
+    {
+        if (_settings == null) return;
+
+        _settings.FtpConnections.RemoveAll(c => c.Id == connectionId);
+        await SaveSettingsAsync();
+    }
+
+    public FtpConnection? GetFtpConnection(string connectionId)
+    {
+        return _settings?.FtpConnections.FirstOrDefault(c => c.Id == connectionId);
+    }
+
+    public IReadOnlyList<FtpConnection> GetFtpConnections()
+    {
+        return _settings?.FtpConnections.AsReadOnly() ?? new List<FtpConnection>().AsReadOnly();
+    }
+
     public async Task<bool> ExportConfigAsync(string filePath, bool includePasswords = false)
     {
         if (_settings == null) return false;
@@ -161,6 +203,22 @@ public class ConfigManager : IConfigManager
                         ObscuredPassword = includePasswords ? c.ObscuredPassword : null,
                         KeyFilePath = c.KeyFilePath,
                         ObscuredKeyPassphrase = includePasswords ? c.ObscuredKeyPassphrase : null,
+                        RemotePath = c.RemotePath,
+                        MountSettings = c.MountSettings,
+                        AutoMount = c.AutoMount,
+                        CreatedAt = c.CreatedAt,
+                        ModifiedAt = c.ModifiedAt
+                    }).ToList(),
+                    FtpConnections = _settings.FtpConnections.Select(c => new FtpConnection
+                    {
+                        Id = c.Id,
+                        Name = c.Name,
+                        Host = c.Host,
+                        Port = c.Port,
+                        Username = c.Username,
+                        ObscuredPassword = includePasswords ? c.ObscuredPassword : null,
+                        TlsMode = c.TlsMode,
+                        PassiveMode = c.PassiveMode,
                         RemotePath = c.RemotePath,
                         MountSettings = c.MountSettings,
                         AutoMount = c.AutoMount,
@@ -207,7 +265,7 @@ public class ConfigManager : IConfigManager
                 _settings.ShowNotifications = exportData.AppSettings.ShowNotifications;
                 _settings.Theme = exportData.AppSettings.Theme;
 
-                // Add connections that don't exist
+                // Add SFTP connections that don't exist
                 foreach (var connection in exportData.AppSettings.Connections)
                 {
                     var existing = _settings.Connections.FirstOrDefault(c => c.Name == connection.Name);
@@ -218,11 +276,24 @@ public class ConfigManager : IConfigManager
                     }
                 }
 
+                // Add FTP connections that don't exist
+                foreach (var connection in exportData.AppSettings.FtpConnections)
+                {
+                    var existing = _settings.FtpConnections.FirstOrDefault(c => c.Name == connection.Name);
+                    if (existing == null)
+                    {
+                        connection.Id = Guid.NewGuid().ToString(); // New ID for imported connection
+                        _settings.FtpConnections.Add(connection);
+                    }
+                }
+
                 await SaveSettingsAsync();
             }
 
-            var importedCount = exportData.AppSettings.Connections.Count;
-            return (true, $"Successfully imported {importedCount} connection(s)");
+            var sftpCount = exportData.AppSettings.Connections.Count;
+            var ftpCount = exportData.AppSettings.FtpConnections?.Count ?? 0;
+            var totalCount = sftpCount + ftpCount;
+            return (true, $"Successfully imported {totalCount} connection(s)");
         }
         catch (Exception ex)
         {

@@ -1,6 +1,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using RcloneGui.Views.ConnectionType.Sftp;
+using RcloneGui.Views.ConnectionType.Ftp;
 
 namespace RcloneGui.Views;
 
@@ -18,5 +19,11 @@ public sealed partial class ConnectionTypeView : Page
     {
         // Navigate to SftpConnectionView for new SFTP connection
         App.MainWindowInstance?.NavigateToSftpConnection(null);
+    }
+
+    private void FtpCard_Click(object sender, RoutedEventArgs e)
+    {
+        // Navigate to FtpConnectionView for new FTP connection
+        App.MainWindowInstance?.NavigateToFtpConnection(null);
     }
 }

@@ -79,12 +79,32 @@ public partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private async Task RefreshDrivesAsync()
+    public async Task RefreshDrivesAsync()
     {
         Drives.Clear();
 
-        var connections = _configManager.GetConnections();
-        foreach (var connection in connections)
+        // Load SFTP connections
+        var sftpConnections = _configManager.GetConnections();
+        foreach (var connection in sftpConnections)
+        {
+            var mountStatus = _mountManager.GetMountStatus(connection.Id);
+            var driveVm = new DriveItemViewModel(connection, _mountManager, _rcloneService)
+            {
+                Status = mountStatus?.Status ?? MountStatus.Unmounted,
+                DriveLetter = mountStatus?.DriveLetter ?? connection.MountSettings.DriveLetter
+            };
+            
+            // Subscribe to events
+            driveVm.EditRequested += OnDriveEditRequested;
+            driveVm.DeleteRequested += OnDriveDeleteRequested;
+            driveVm.DuplicateRequested += OnDriveDuplicateRequested;
+            
+            Drives.Add(driveVm);
+        }
+
+        // Load FTP connections
+        var ftpConnections = _configManager.GetFtpConnections();
+        foreach (var connection in ftpConnections)
         {
             var mountStatus = _mountManager.GetMountStatus(connection.Id);
             var driveVm = new DriveItemViewModel(connection, _mountManager, _rcloneService)
@@ -106,7 +126,14 @@ public partial class MainViewModel : ObservableObject
     {
         if (sender is DriveItemViewModel drive)
         {
-            App.MainWindowInstance?.NavigateToAddConnection(drive.Connection);
+            if (drive.IsSftp && drive.SftpConnection != null)
+            {
+                App.MainWindowInstance?.NavigateToSftpConnection(drive.SftpConnection);
+            }
+            else if (drive.IsFtp && drive.FtpConnection != null)
+            {
+                App.MainWindowInstance?.NavigateToFtpConnection(drive.FtpConnection);
+            }
         }
     }
 
@@ -128,8 +155,21 @@ public partial class MainViewModel : ObservableObject
 
     private async Task DuplicateConnectionAsync(DriveItemViewModel drive)
     {
-        // Create a copy of the connection with a new ID and modified name
-        var original = drive.Connection;
+        if (drive.IsSftp && drive.SftpConnection is SftpConnection sftpOriginal)
+        {
+            await DuplicateSftpConnectionAsync(sftpOriginal);
+        }
+        else if (drive.IsFtp && drive.FtpConnection is FtpConnection ftpOriginal)
+        {
+            await DuplicateFtpConnectionAsync(ftpOriginal);
+        }
+
+        // Refresh UI
+        await RefreshDrivesAsync();
+    }
+
+    private async Task DuplicateSftpConnectionAsync(SftpConnection original)
+    {
         var duplicate = new SftpConnection
         {
             Id = Guid.NewGuid().ToString(),
@@ -155,14 +195,38 @@ public partial class MainViewModel : ObservableObject
             }
         };
 
-        // Create rclone remote for duplicate
         await _rcloneService.CreateSftpRemoteAsync(duplicate);
-
-        // Save to config
         await _configManager.AddConnectionAsync(duplicate);
+    }
 
-        // Refresh UI
-        await RefreshDrivesAsync();
+    private async Task DuplicateFtpConnectionAsync(FtpConnection original)
+    {
+        var duplicate = new FtpConnection
+        {
+            Id = Guid.NewGuid().ToString(),
+            Name = $"{original.Name} (Copy)",
+            Host = original.Host,
+            Port = original.Port,
+            Username = original.Username,
+            ObscuredPassword = original.ObscuredPassword,
+            TlsMode = original.TlsMode,
+            PassiveMode = original.PassiveMode,
+            RemotePath = original.RemotePath,
+            AutoMount = original.AutoMount,
+            MountSettings = new MountSettings
+            {
+                DriveLetter = null, // Will auto-assign
+                NetworkMode = original.MountSettings.NetworkMode,
+                VolumeName = original.MountSettings.VolumeName,
+                ReadOnly = original.MountSettings.ReadOnly,
+                CacheMode = original.MountSettings.CacheMode,
+                CacheMaxSize = original.MountSettings.CacheMaxSize,
+                DirCacheTimeMinutes = original.MountSettings.DirCacheTimeMinutes
+            }
+        };
+
+        await _rcloneService.CreateFtpRemoteAsync(duplicate);
+        await _configManager.AddFtpConnectionAsync(duplicate);
     }
 
     [RelayCommand]
@@ -227,14 +291,27 @@ public partial class MainViewModel : ObservableObject
         // Unmount if mounted
         if (drive.Status == MountStatus.Mounted)
         {
-            await _mountManager.UnmountAsync(drive.Connection.Id);
+            if (drive.IsSftp && drive.SftpConnection is SftpConnection sftp)
+            {
+                await _mountManager.UnmountAsync(sftp.Id);
+            }
+            else if (drive.IsFtp && drive.FtpConnection is FtpConnection ftp)
+            {
+                await _mountManager.UnmountAsync(ftp.Id);
+            }
         }
 
-        // Delete from rclone config
-        await _rcloneService.DeleteRemoteAsync(drive.Connection.RcloneRemoteName);
-
-        // Delete from app config
-        await _configManager.DeleteConnectionAsync(drive.Connection.Id);
+        // Delete from rclone config and app config
+        if (drive.IsSftp && drive.SftpConnection is SftpConnection sftpConn)
+        {
+            await _rcloneService.DeleteRemoteAsync(sftpConn.RcloneRemoteName);
+            await _configManager.DeleteConnectionAsync(sftpConn.Id);
+        }
+        else if (drive.IsFtp && drive.FtpConnection is FtpConnection ftpConn)
+        {
+            await _rcloneService.DeleteRemoteAsync(ftpConn.RcloneRemoteName);
+            await _configManager.DeleteFtpConnectionAsync(ftpConn.Id);
+        }
 
         // Refresh UI
         await RefreshDrivesAsync();
@@ -242,7 +319,7 @@ public partial class MainViewModel : ObservableObject
 
     private void OnMountStatusChanged(object? sender, MountStatusChangedEventArgs e)
     {
-        var drive = Drives.FirstOrDefault(d => d.Connection.Id == e.ConnectionId);
+        var drive = Drives.FirstOrDefault(d => d.Connection is SftpConnection sftp && sftp.Id == e.ConnectionId || d.Connection is FtpConnection ftp && ftp.Id == e.ConnectionId);
         if (drive != null)
         {
             drive.Status = e.NewStatus;

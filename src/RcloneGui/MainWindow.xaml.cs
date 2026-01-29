@@ -345,6 +345,25 @@ public sealed partial class MainWindow : Window
         }
     }
 
+    /// <summary>
+    /// Navigate to FtpConnectionView for new or editing FTP connection.
+    /// </summary>
+    public void NavigateToFtpConnection(Models.FtpConnection? connectionToEdit)
+    {
+        ContentFrame.BackStack.Clear();
+        ContentFrame.ForwardStack.Clear();
+        ContentFrame.Navigate(typeof(Views.ConnectionType.Ftp.FtpConnectionView), connectionToEdit);
+        
+        foreach (var item in NavView.MenuItems)
+        {
+            if (item is NavigationViewItem navItem && navItem.Tag?.ToString() == "add")
+            {
+                NavView.SelectedItem = navItem;
+                break;
+            }
+        }
+    }
+
     public void NavigateToDrives()
     {
         ContentFrame.Navigate(typeof(DrivesView));

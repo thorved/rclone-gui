@@ -6,14 +6,17 @@ using RcloneGui.Services;
 namespace RcloneGui.ViewModels;
 
 /// <summary>
-/// ViewModel for a drive item in the list.
+/// ViewModel for a drive item in the list (supports both SFTP and FTP).
 /// </summary>
 public partial class DriveItemViewModel : ObservableObject
 {
     private readonly IMountManager _mountManager;
     private readonly IRcloneService _rcloneService;
 
-    public SftpConnection Connection { get; }
+    /// <summary>
+    /// The connection (SftpConnection or FtpConnection).
+    /// </summary>
+    public object Connection { get; }
 
     [ObservableProperty]
     private MountStatus _status = MountStatus.Unmounted;
@@ -27,10 +30,50 @@ public partial class DriveItemViewModel : ObservableObject
     [ObservableProperty]
     private bool _isBusy;
 
-    public string Name => Connection.Name;
-    public string Host => $"{Connection.Host}:{Connection.Port}";
-    public string RemotePath => Connection.RemotePath;
-    public bool AutoMount => Connection.AutoMount;
+    // Connection type helpers
+    public bool IsSftp => Connection is SftpConnection;
+    public bool IsFtp => Connection is FtpConnection;
+
+    // SFTP connection (null if FTP)
+    public SftpConnection? SftpConnection => Connection as SftpConnection;
+    
+    // FTP connection (null if SFTP)
+    public FtpConnection? FtpConnection => Connection as FtpConnection;
+
+    public string Name => Connection switch
+    {
+        SftpConnection sftp => sftp.Name,
+        FtpConnection ftp => ftp.Name,
+        _ => "Unknown"
+    };
+
+    public string Host => Connection switch
+    {
+        SftpConnection sftp => $"{sftp.Host}:{sftp.Port}",
+        FtpConnection ftp => $"{ftp.Host}:{ftp.Port}",
+        _ => "Unknown"
+    };
+
+    public string RemotePath => Connection switch
+    {
+        SftpConnection sftp => sftp.RemotePath,
+        FtpConnection ftp => ftp.RemotePath,
+        _ => "/"
+    };
+
+    public bool AutoMount => Connection switch
+    {
+        SftpConnection sftp => sftp.AutoMount,
+        FtpConnection ftp => ftp.AutoMount,
+        _ => false
+    };
+
+    public string ConnectionType => Connection switch
+    {
+        SftpConnection _ => "SFTP",
+        FtpConnection _ => "FTP",
+        _ => "Unknown"
+    };
 
     public string StatusText => Status switch
     {
@@ -102,12 +145,37 @@ public partial class DriveItemViewModel : ObservableObject
         }
     }
 
-    public DriveItemViewModel(SftpConnection connection, IMountManager mountManager, IRcloneService rcloneService)
+    public DriveItemViewModel(object connection, IMountManager mountManager, IRcloneService rcloneService)
     {
+        if (!(connection is SftpConnection) && !(connection is FtpConnection))
+        {
+            throw new ArgumentException("Connection must be either SftpConnection or FtpConnection", nameof(connection));
+        }
+        
         Connection = connection;
         _mountManager = mountManager;
         _rcloneService = rcloneService;
-        _driveLetter = connection.MountSettings.DriveLetter;
+        _driveLetter = GetMountSettings()?.DriveLetter;
+    }
+
+    private MountSettings? GetMountSettings()
+    {
+        return Connection switch
+        {
+            SftpConnection sftp => sftp.MountSettings,
+            FtpConnection ftp => ftp.MountSettings,
+            _ => null
+        };
+    }
+
+    private string GetConnectionId()
+    {
+        return Connection switch
+        {
+            SftpConnection sftp => sftp.Id,
+            FtpConnection ftp => ftp.Id,
+            _ => throw new InvalidOperationException("Unknown connection type")
+        };
     }
 
     [RelayCommand]
@@ -120,7 +188,20 @@ public partial class DriveItemViewModel : ObservableObject
 
         try
         {
-            var result = await _mountManager.MountAsync(Connection, DriveLetter);
+            MountedDrive result;
+            if (Connection is SftpConnection sftp)
+            {
+                result = await _mountManager.MountAsync(sftp, DriveLetter);
+            }
+            else if (Connection is FtpConnection ftp)
+            {
+                result = await _mountManager.MountAsync(ftp, DriveLetter);
+            }
+            else
+            {
+                throw new InvalidOperationException("Unknown connection type");
+            }
+            
             DriveLetter = result.DriveLetter;
             Status = result.Status;
             
@@ -150,7 +231,8 @@ public partial class DriveItemViewModel : ObservableObject
 
         try
         {
-            var success = await _mountManager.UnmountAsync(Connection.Id);
+            var connectionId = GetConnectionId();
+            var success = await _mountManager.UnmountAsync(connectionId);
             if (success)
             {
                 Status = MountStatus.Unmounted;
@@ -191,7 +273,22 @@ public partial class DriveItemViewModel : ObservableObject
 
         try
         {
-            var (success, message) = await _rcloneService.TestConnectionAsync(Connection);
+            bool success;
+            string message;
+            
+            if (Connection is SftpConnection sftp)
+            {
+                (success, message) = await _rcloneService.TestConnectionAsync(sftp);
+            }
+            else if (Connection is FtpConnection ftp)
+            {
+                (success, message) = await _rcloneService.TestFtpConnectionAsync(ftp);
+            }
+            else
+            {
+                throw new InvalidOperationException("Unknown connection type");
+            }
+            
             if (!success)
             {
                 ErrorMessage = message;

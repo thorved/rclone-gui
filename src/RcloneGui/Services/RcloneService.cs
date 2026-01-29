@@ -74,6 +74,41 @@ public class RcloneService : IRcloneService
         return result.Success;
     }
 
+    public async Task<bool> CreateFtpRemoteAsync(FtpConnection connection)
+    {
+        var args = new StringBuilder();
+        args.Append($"config create \"{connection.RcloneRemoteName}\" ftp ");
+        args.Append($"host=\"{connection.Host}\" ");
+        args.Append($"port={connection.Port} ");
+        
+        // Only add user/pass for non-anonymous connections
+        if (!connection.IsAnonymous)
+        {
+            args.Append($"user=\"{connection.Username}\" ");
+            if (!string.IsNullOrEmpty(connection.ObscuredPassword))
+            {
+                args.Append($"pass=\"{connection.ObscuredPassword}\" ");
+            }
+        }
+
+        // TLS mode
+        switch (connection.TlsMode)
+        {
+            case FtpTlsMode.Implicit:
+                args.Append("tls=true ");
+                break;
+            case FtpTlsMode.Explicit:
+                args.Append("explicit_tls=true ");
+                break;
+        }
+
+        // Passive mode
+        args.Append($"passive={connection.PassiveMode.ToString().ToLower()} ");
+
+        var result = await RunRcloneAsync(args.ToString());
+        return result.Success;
+    }
+
     public async Task<bool> DeleteRemoteAsync(string remoteName)
     {
         var result = await RunRcloneAsync($"config delete \"{remoteName}\"");
@@ -84,6 +119,25 @@ public class RcloneService : IRcloneService
     {
         // First ensure remote is configured
         await CreateSftpRemoteAsync(connection);
+
+        // Try to list the remote path
+        var remotePath = $"{connection.RcloneRemoteName}:{connection.RemotePath}";
+        var result = await RunRcloneAsync($"lsd \"{remotePath}\" --max-depth 1", timeoutSeconds: 30);
+
+        if (result.Success)
+        {
+            return (true, "Connection successful!");
+        }
+        else
+        {
+            return (false, result.Error ?? "Connection failed");
+        }
+    }
+
+    public async Task<(bool Success, string Message)> TestFtpConnectionAsync(FtpConnection connection)
+    {
+        // First ensure remote is configured
+        await CreateFtpRemoteAsync(connection);
 
         // Try to list the remote path
         var remotePath = $"{connection.RcloneRemoteName}:{connection.RemotePath}";
@@ -153,6 +207,125 @@ public class RcloneService : IRcloneService
         
         args.Append($"--dir-cache-time {settings.DirCacheTimeMinutes}m ");
         
+        // Additional recommended options
+        args.Append("--vfs-cache-poll-interval 1m ");
+        args.Append("--log-level INFO ");
+
+        try
+        {
+            var process = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = _rclonePath,
+                    Arguments = args.ToString(),
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true
+                },
+                EnableRaisingEvents = true
+            };
+
+            process.Start();
+
+            // Wait a bit to see if mount fails immediately
+            await Task.Delay(2000, cancellationToken);
+
+            if (process.HasExited)
+            {
+                var error = await process.StandardError.ReadToEndAsync(cancellationToken);
+                return new MountResult
+                {
+                    Success = false,
+                    ErrorMessage = error,
+                    DriveLetter = driveLetter
+                };
+            }
+
+            // Check if drive is accessible
+            if (Directory.Exists($"{driveLetter}:\\"))
+            {
+                return new MountResult
+                {
+                    Success = true,
+                    Process = process,
+                    DriveLetter = driveLetter
+                };
+            }
+
+            // Wait a bit more for mount to complete
+            await Task.Delay(3000, cancellationToken);
+
+            if (Directory.Exists($"{driveLetter}:\\"))
+            {
+                return new MountResult
+                {
+                    Success = true,
+                    Process = process,
+                    DriveLetter = driveLetter
+                };
+            }
+
+            return new MountResult
+            {
+                Success = false,
+                ErrorMessage = "Mount did not become accessible in time",
+                DriveLetter = driveLetter
+            };
+        }
+        catch (Exception ex)
+        {
+            return new MountResult
+            {
+                Success = false,
+                ErrorMessage = ex.Message,
+                DriveLetter = driveLetter
+            };
+        }
+    }
+
+    public async Task<MountResult> MountAsync(FtpConnection connection, string driveLetter, CancellationToken cancellationToken = default)
+    {
+        // Ensure remote is configured
+        await CreateFtpRemoteAsync(connection);
+
+        var settings = connection.MountSettings;
+        var remotePath = $"{connection.RcloneRemoteName}:{connection.RemotePath}";
+
+        var args = new StringBuilder();
+        args.Append($"mount \"{remotePath}\" {driveLetter}: ");
+
+        // Mount options
+        if (settings.NetworkMode)
+        {
+            args.Append("--network-mode ");
+        }
+
+        if (!string.IsNullOrEmpty(settings.VolumeName))
+        {
+            args.Append($"--volname \"{settings.VolumeName}\" ");
+        }
+        else
+        {
+            args.Append($"--volname \"{connection.Name}\" ");
+        }
+
+        if (settings.ReadOnly)
+        {
+            args.Append("--read-only ");
+        }
+
+        // VFS cache settings
+        args.Append($"--vfs-cache-mode {settings.CacheMode.ToString().ToLower()} ");
+
+        if (!string.IsNullOrEmpty(settings.CacheMaxSize))
+        {
+            args.Append($"--vfs-cache-max-size {settings.CacheMaxSize} ");
+        }
+
+        args.Append($"--dir-cache-time {settings.DirCacheTimeMinutes}m ");
+
         // Additional recommended options
         args.Append("--vfs-cache-poll-interval 1m ");
         args.Append("--log-level INFO ");

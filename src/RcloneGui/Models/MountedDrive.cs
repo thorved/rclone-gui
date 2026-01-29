@@ -8,9 +8,9 @@ namespace RcloneGui.Models;
 public class MountedDrive
 {
     /// <summary>
-    /// The connection that is mounted.
+    /// The connection that is mounted (SftpConnection or FtpConnection).
     /// </summary>
-    public required SftpConnection Connection { get; init; }
+    public required object Connection { get; init; }
 
     /// <summary>
     /// The drive letter where the connection is mounted.
@@ -50,7 +50,45 @@ public class MountedDrive
     /// <summary>
     /// Gets the display name for the mount.
     /// </summary>
-    public string DisplayName => Connection.MountSettings.VolumeName ?? Connection.Name;
+    public string DisplayName
+    {
+        get
+        {
+            var mountSettings = Connection switch
+            {
+                SftpConnection sftp => sftp.MountSettings,
+                FtpConnection ftp => ftp.MountSettings,
+                _ => null
+            };
+            var name = Connection switch
+            {
+                SftpConnection sftp => sftp.Name,
+                FtpConnection ftp => ftp.Name,
+                _ => "Unknown"
+            };
+            return mountSettings?.VolumeName ?? name;
+        }
+    }
+
+    /// <summary>
+    /// Gets the connection ID.
+    /// </summary>
+    public string ConnectionId => Connection switch
+    {
+        SftpConnection sftp => sftp.Id,
+        FtpConnection ftp => ftp.Id,
+        _ => throw new InvalidOperationException("Unknown connection type")
+    };
+
+    /// <summary>
+    /// Gets the connection name.
+    /// </summary>
+    public string ConnectionName => Connection switch
+    {
+        SftpConnection sftp => sftp.Name,
+        FtpConnection ftp => ftp.Name,
+        _ => "Unknown"
+    };
 }
 
 /// <summary>

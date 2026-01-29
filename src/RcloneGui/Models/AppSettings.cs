@@ -54,6 +54,11 @@ public class AppSettings
     /// List of configured SFTP connections.
     /// </summary>
     public List<SftpConnection> Connections { get; set; } = new();
+
+    /// <summary>
+    /// List of configured FTP connections.
+    /// </summary>
+    public List<FtpConnection> FtpConnections { get; set; } = new();
 }
 
 /// <summary>

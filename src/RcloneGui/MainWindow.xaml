@@ -7,33 +7,36 @@
     xmlns:views="using:RcloneGui.Views"
     xmlns:vm="using:RcloneGui.ViewModels"
     xmlns:tb="using:H.NotifyIcon"
-    Title="Rclone GUI - SFTP Drive Mounter">
+    Title="Rclone GUI">
 
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="32"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- Title Bar -->
-        <Grid Grid.Row="0" Padding="16,12" Background="{ThemeResource SolidBackgroundFillColorBaseBrush}">
+        <!-- Custom Title Bar -->
+        <Grid x:Name="AppTitleBar" Grid.Row="0" Background="#1F1F1F">
             <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-
-            <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-                <FontIcon Glyph="&#xE8B7;" FontSize="24" Foreground="{ThemeResource AccentFillColorDefaultBrush}"/>
-                <TextBlock Text="Rclone GUI" Style="{StaticResource TitleTextBlockStyle}" FontWeight="SemiBold"/>
+            
+            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" Margin="12,0,0,0" VerticalAlignment="Center">
+                <FontIcon Glyph="&#xE8B7;" FontSize="14" Foreground="{ThemeResource AccentFillColorDefaultBrush}"/>
+                <TextBlock x:Name="AppTitleTextBlock" Text="Rclone GUI" Style="{StaticResource CaptionTextBlockStyle}" 
+                           Foreground="White" VerticalAlignment="Center"/>
             </StackPanel>
-
-            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+            
+            <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="0,0,140,0" VerticalAlignment="Center">
                 <Button x:Name="SettingsButton" 
                         ToolTipService.ToolTip="Settings"
                         Click="SettingsButton_Click"
                         Background="Transparent"
-                        BorderBrush="Transparent">
-                    <FontIcon Glyph="&#xE713;" FontSize="16"/>
+                        BorderBrush="Transparent"
+                        Width="32" Height="32" Padding="0">
+                    <FontIcon Glyph="&#xE713;" FontSize="14" Foreground="White"/>
                 </Button>
             </StackPanel>
         </Grid>
@@ -61,14 +64,6 @@
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
             </NavigationView.MenuItems>
-
-            <NavigationView.FooterMenuItems>
-                <NavigationViewItem Tag="settings" Content="Settings">
-                    <NavigationViewItem.Icon>
-                        <FontIcon Glyph="&#xE713;"/>
-                    </NavigationViewItem.Icon>
-                </NavigationViewItem>
-            </NavigationView.FooterMenuItems>
 
             <!-- Content Frame -->
             <Frame x:Name="ContentFrame" Padding="24"/>

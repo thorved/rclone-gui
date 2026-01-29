@@ -5,15 +5,13 @@ using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
 using RcloneGui.ViewModels;
+using RcloneGui.Views.ConnectionType.Sftp;
 
 namespace RcloneGui.Views;
 
 public sealed partial class DrivesView : Page
 {
     public MainViewModel ViewModel { get; }
-    
-    // Store the current drive item for menu flyout actions
-    private DriveItemViewModel? _currentFlyoutItem;
 
     public DrivesView()
     {
@@ -36,42 +34,44 @@ public sealed partial class DrivesView : Page
         App.MainWindowInstance?.NavigateToAddConnection();
     }
 
-    private void MoreOptionsButton_Click(object sender, RoutedEventArgs e)
+    private async void SettingsButton_Click(object sender, RoutedEventArgs e)
     {
-        // Store the DriveItemViewModel from the button's Tag when flyout opens
+        // Get DriveItemViewModel directly from the Button's Tag
         if (sender is Button button && button.Tag is DriveItemViewModel driveVm)
         {
-            _currentFlyoutItem = driveVm;
-            System.Diagnostics.Debug.WriteLine($"MoreOptions clicked, stored: {driveVm.Connection.Name}");
-        }
-    }
-
-    private void EditMenuItem_Click(object sender, RoutedEventArgs e)
-    {
-        if (_currentFlyoutItem != null)
-        {
-            System.Diagnostics.Debug.WriteLine($"Edit clicked for: {_currentFlyoutItem.Connection.Name}");
-            App.MainWindowInstance?.NavigateToAddConnection(_currentFlyoutItem.Connection);
+            System.Diagnostics.Debug.WriteLine($"Settings clicked for: {driveVm.Connection.Name}, Id: {driveVm.Connection.Id}");
+            
+            var dialog = new SftpSettingsDialog();
+            dialog.XamlRoot = this.XamlRoot;
+            dialog.LoadConnection(driveVm.Connection);
+            
+            var result = await dialog.ShowAsync();
+            
+            if (result == ContentDialogResult.Primary)
+            {
+                // Refresh drives after saving
+                await ViewModel.RefreshDrivesCommand.ExecuteAsync(null);
+            }
         }
         else
         {
-            System.Diagnostics.Debug.WriteLine("Edit clicked but _currentFlyoutItem is null");
+            System.Diagnostics.Debug.WriteLine("Settings clicked but could not get DriveItemViewModel from Tag");
         }
     }
 
     private void DuplicateMenuItem_Click(object sender, RoutedEventArgs e)
     {
-        if (_currentFlyoutItem != null)
+        if (sender is MenuFlyoutItem menuItem && menuItem.Tag is DriveItemViewModel driveVm)
         {
-            _currentFlyoutItem.DuplicateCommand.Execute(null);
+            driveVm.DuplicateCommand.Execute(null);
         }
     }
 
     private void DeleteMenuItem_Click(object sender, RoutedEventArgs e)
     {
-        if (_currentFlyoutItem != null)
+        if (sender is MenuFlyoutItem menuItem && menuItem.Tag is DriveItemViewModel driveVm)
         {
-            _currentFlyoutItem.DeleteCommand.Execute(null);
+            driveVm.DeleteCommand.Execute(null);
         }
     }
 }

@@ -67,6 +67,41 @@ public partial class DriveItemViewModel : ObservableObject
     /// </summary>
     public bool IsMounted => Status == MountStatus.Mounted;
 
+    /// <summary>
+    /// Icon for toggle mount button
+    /// </summary>
+    public string ToggleMountIcon => IsMounted ? "\uE74B" : "\uE768"; // Eject vs Mount
+
+    /// <summary>
+    /// Tooltip for toggle mount button
+    /// </summary>
+    public string ToggleMountTooltip => IsMounted ? "Unmount Drive" : "Mount Drive";
+
+    /// <summary>
+    /// Drive size text (if mounted)
+    /// </summary>
+    public string SizeText
+    {
+        get
+        {
+            if (!IsMounted || string.IsNullOrEmpty(DriveLetter)) return "";
+            
+            try
+            {
+                var driveInfo = new DriveInfo(DriveLetter);
+                if (driveInfo.IsReady)
+                {
+                    var totalGB = driveInfo.TotalSize / (1024.0 * 1024 * 1024);
+                    var freeGB = driveInfo.AvailableFreeSpace / (1024.0 * 1024 * 1024);
+                    return $"{freeGB:F1} GB free of {totalGB:F1} GB";
+                }
+            }
+            catch { }
+            
+            return "";
+        }
+    }
+
     public DriveItemViewModel(SftpConnection connection, IMountManager mountManager, IRcloneService rcloneService)
     {
         Connection = connection;
@@ -227,5 +262,8 @@ public partial class DriveItemViewModel : ObservableObject
         OnPropertyChanged(nameof(CanMount));
         OnPropertyChanged(nameof(CanUnmount));
         OnPropertyChanged(nameof(IsMounted));
+        OnPropertyChanged(nameof(ToggleMountIcon));
+        OnPropertyChanged(nameof(ToggleMountTooltip));
+        OnPropertyChanged(nameof(SizeText));
     }
 }

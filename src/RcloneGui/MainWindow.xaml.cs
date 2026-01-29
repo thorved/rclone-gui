@@ -1,10 +1,14 @@
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.UI;
+using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using RcloneGui.Services;
 using RcloneGui.ViewModels;
 using RcloneGui.Views;
+using RcloneGui.Views.ConnectionType.Sftp;
+using Windows.Graphics;
 
 namespace RcloneGui;
 
@@ -16,6 +20,7 @@ public sealed partial class MainWindow : Window
     private readonly MainViewModel _viewModel;
     private readonly IConfigManager _configManager;
     private bool _isClosing;
+    private AppWindow _appWindow;
 
     public MainWindow()
     {
@@ -24,15 +29,27 @@ public sealed partial class MainWindow : Window
         _viewModel = App.Services.GetRequiredService<MainViewModel>();
         _configManager = App.Services.GetRequiredService<IConfigManager>();
         
-        // Set window size
+        // Get AppWindow for customization
         var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
         var windowId = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(hwnd);
-        var appWindow = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(windowId);
-        appWindow.Resize(new Windows.Graphics.SizeInt32(1200, 800));
-        appWindow.Title = "Rclone GUI - SFTP Drive Mounter";
+        _appWindow = AppWindow.GetFromWindowId(windowId);
+        
+        // Set fixed window size
+        _appWindow.Resize(new SizeInt32(800, 600));
+        _appWindow.Title = "Rclone GUI";
+        
+        // Configure custom title bar
+        ConfigureTitleBar();
+        
+        // Disable resizing by using OverlappedPresenter
+        if (_appWindow.Presenter is OverlappedPresenter presenter)
+        {
+            presenter.IsResizable = false;
+            presenter.IsMaximizable = false;
+        }
 
         // Handle close button
-        appWindow.Closing += AppWindow_Closing;
+        _appWindow.Closing += AppWindow_Closing;
 
         // Set up tray icon left click
         TrayIcon.LeftClickCommand = new RelayCommand(ShowAndActivateWindow);
@@ -42,6 +59,32 @@ public sealed partial class MainWindow : Window
 
         // Initialize
         _ = InitializeAsync();
+    }
+
+    private void ConfigureTitleBar()
+    {
+        // Extend content into the title bar
+        ExtendsContentIntoTitleBar = true;
+        
+        // Set the custom title bar element
+        SetTitleBar(AppTitleBar);
+        
+        // Customize title bar colors
+        if (AppWindowTitleBar.IsCustomizationSupported())
+        {
+            var titleBar = _appWindow.TitleBar;
+            titleBar.ExtendsContentIntoTitleBar = true;
+            
+            // Set dark colors
+            titleBar.ButtonBackgroundColor = Colors.Transparent;
+            titleBar.ButtonInactiveBackgroundColor = Colors.Transparent;
+            titleBar.ButtonHoverBackgroundColor = Windows.UI.Color.FromArgb(50, 255, 255, 255);
+            titleBar.ButtonPressedBackgroundColor = Windows.UI.Color.FromArgb(80, 255, 255, 255);
+            titleBar.ButtonForegroundColor = Colors.White;
+            titleBar.ButtonInactiveForegroundColor = Windows.UI.Color.FromArgb(128, 255, 255, 255);
+            titleBar.ButtonHoverForegroundColor = Colors.White;
+            titleBar.ButtonPressedForegroundColor = Colors.White;
+        }
     }
 
     private async Task InitializeAsync()
@@ -95,7 +138,8 @@ public sealed partial class MainWindow : Window
                     ContentFrame.Navigate(typeof(DrivesView));
                     break;
                 case "add":
-                    ContentFrame.Navigate(typeof(AddConnectionView));
+                    // Show connection type selector for new connections
+                    ContentFrame.Navigate(typeof(ConnectionTypeView));
                     break;
                 case "settings":
                     ContentFrame.Navigate(typeof(SettingsView));
@@ -168,7 +212,38 @@ public sealed partial class MainWindow : Window
         // Clear cache to ensure fresh page with new parameters
         ContentFrame.BackStack.Clear();
         ContentFrame.ForwardStack.Clear();
-        ContentFrame.Navigate(typeof(AddConnectionView), connectionToEdit);
+        
+        if (connectionToEdit != null)
+        {
+            // Editing existing connection - go directly to SftpConnectionView
+            System.Diagnostics.Debug.WriteLine($"NavigateToAddConnection: Editing {connectionToEdit.Name}");
+            ContentFrame.Navigate(typeof(SftpConnectionView), connectionToEdit);
+        }
+        else
+        {
+            // Adding new connection - show connection type selector first
+            System.Diagnostics.Debug.WriteLine("NavigateToAddConnection: Showing type selector");
+            ContentFrame.Navigate(typeof(ConnectionTypeView));
+        }
+        
+        foreach (var item in NavView.MenuItems)
+        {
+            if (item is NavigationViewItem navItem && navItem.Tag?.ToString() == "add")
+            {
+                NavView.SelectedItem = navItem;
+                break;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Navigate to SftpConnectionView for new or editing SFTP connection.
+    /// </summary>
+    public void NavigateToSftpConnection(Models.SftpConnection? connectionToEdit)
+    {
+        ContentFrame.BackStack.Clear();
+        ContentFrame.ForwardStack.Clear();
+        ContentFrame.Navigate(typeof(SftpConnectionView), connectionToEdit);
         
         foreach (var item in NavView.MenuItems)
         {

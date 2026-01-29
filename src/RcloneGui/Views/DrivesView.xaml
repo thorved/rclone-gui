@@ -103,6 +103,13 @@
                                              VerticalAlignment="Center"/>
                                     <TextBlock Text="{x:Bind Status, Mode=OneWay, Converter={StaticResource StatusToText}}"
                                                Style="{StaticResource CaptionTextBlockStyle}"/>
+                                    <TextBlock Text=" • " 
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                               Visibility="{x:Bind IsMounted, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"/>
+                                    <TextBlock Text="{x:Bind SizeText, Mode=OneWay}"
+                                               Style="{StaticResource CaptionTextBlockStyle}"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                               Visibility="{x:Bind IsMounted, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"/>
                                 </StackPanel>
                             </StackPanel>
                             
@@ -111,29 +118,25 @@
                                         Orientation="Horizontal" 
                                         Spacing="8"
                                         VerticalAlignment="Center">
-                                <Button Command="{x:Bind MountCommand}"
-                                        IsEnabled="{x:Bind CanMount, Mode=OneWay}"
-                                        ToolTipService.ToolTip="Mount Drive">
-                                    <FontIcon Glyph="&#xE768;" FontSize="16"/>
-                                </Button>
-                                <Button Command="{x:Bind UnmountCommand}"
-                                        IsEnabled="{x:Bind CanUnmount, Mode=OneWay}"
-                                        ToolTipService.ToolTip="Unmount Drive">
-                                    <FontIcon Glyph="&#xE74B;" FontSize="16"/>
+                                <Button Command="{x:Bind ToggleMountCommand}"
+                                        ToolTipService.ToolTip="{x:Bind ToggleMountTooltip, Mode=OneWay}">
+                                    <FontIcon Glyph="{x:Bind ToggleMountIcon, Mode=OneWay}" FontSize="16"/>
                                 </Button>
                                 <Button Command="{x:Bind OpenCommand}"
                                         IsEnabled="{x:Bind IsMounted, Mode=OneWay}"
                                         ToolTipService.ToolTip="Open in Explorer">
                                     <FontIcon Glyph="&#xED25;" FontSize="16"/>
                                 </Button>
-                                <Button Tag="{x:Bind}" Click="MoreOptionsButton_Click" ToolTipService.ToolTip="More Options">
+                                <Button Tag="{x:Bind}" Click="SettingsButton_Click" ToolTipService.ToolTip="Settings">
+                                    <FontIcon Glyph="&#xE713;" FontSize="16"/>
+                                </Button>
+                                <Button Tag="{x:Bind}" ToolTipService.ToolTip="More Options">
                                     <FontIcon Glyph="&#xE712;" FontSize="16"/>
                                     <Button.Flyout>
                                         <MenuFlyout>
-                                            <MenuFlyoutItem Text="Edit" Icon="Edit" Click="EditMenuItem_Click"/>
-                                            <MenuFlyoutItem Text="Duplicate" Icon="Copy" Click="DuplicateMenuItem_Click"/>
+                                            <MenuFlyoutItem Text="Duplicate" Icon="Copy" Tag="{x:Bind}" Click="DuplicateMenuItem_Click"/>
                                             <MenuFlyoutSeparator/>
-                                            <MenuFlyoutItem Text="Delete" Icon="Delete" Click="DeleteMenuItem_Click"/>
+                                            <MenuFlyoutItem Text="Delete" Icon="Delete" Tag="{x:Bind}" Click="DeleteMenuItem_Click"/>
                                         </MenuFlyout>
                                     </Button.Flyout>
                                 </Button>

@@ -326,3 +326,69 @@ public class MountStatusToTextConverter : IValueConverter
         throw new NotImplementedException();
     }
 }
+
+/// <summary>
+/// Inverts a boolean value (alias for InvertBoolConverter).
+/// </summary>
+public class InverseBoolConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, string language)
+    {
+        if (value is bool b)
+        {
+            return !b;
+        }
+        return true;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, string language)
+    {
+        if (value is bool b)
+        {
+            return !b;
+        }
+        return false;
+    }
+}
+
+/// <summary>
+/// Converts bool to InfoBar severity (Success/Error).
+/// </summary>
+public class BoolToSeverityConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, string language)
+    {
+        if (value is bool success)
+        {
+            return success 
+                ? Microsoft.UI.Xaml.Controls.InfoBarSeverity.Success 
+                : Microsoft.UI.Xaml.Controls.InfoBarSeverity.Error;
+        }
+        return Microsoft.UI.Xaml.Controls.InfoBarSeverity.Informational;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, string language)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+/// <summary>
+/// Converts bool to test title text.
+/// </summary>
+public class BoolToTestTitleConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, string language)
+    {
+        if (value is bool success)
+        {
+            return success ? "Connection Successful" : "Connection Failed";
+        }
+        return "Test Result";
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, string language)
+    {
+        throw new NotImplementedException();
+    }
+}

@@ -126,14 +126,14 @@
                                         ToolTipService.ToolTip="Open in Explorer">
                                     <FontIcon Glyph="&#xED25;" FontSize="16"/>
                                 </Button>
-                                <Button ToolTipService.ToolTip="More Options">
+                                <Button Tag="{x:Bind}" Click="MoreOptionsButton_Click" ToolTipService.ToolTip="More Options">
                                     <FontIcon Glyph="&#xE712;" FontSize="16"/>
                                     <Button.Flyout>
                                         <MenuFlyout>
-                                            <MenuFlyoutItem Text="Edit" Icon="Edit" Command="{x:Bind EditCommand}"/>
-                                            <MenuFlyoutItem Text="Duplicate" Icon="Copy"/>
+                                            <MenuFlyoutItem Text="Edit" Icon="Edit" Click="EditMenuItem_Click"/>
+                                            <MenuFlyoutItem Text="Duplicate" Icon="Copy" Click="DuplicateMenuItem_Click"/>
                                             <MenuFlyoutSeparator/>
-                                            <MenuFlyoutItem Text="Delete" Icon="Delete" Command="{x:Bind DeleteCommand}"/>
+                                            <MenuFlyoutItem Text="Delete" Icon="Delete" Click="DeleteMenuItem_Click"/>
                                         </MenuFlyout>
                                     </Button.Flyout>
                                 </Button>

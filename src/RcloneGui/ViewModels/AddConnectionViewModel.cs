@@ -100,6 +100,7 @@ public partial class AddConnectionViewModel : ObservableObject
 
     public void LoadConnection(SftpConnection connection)
     {
+        System.Diagnostics.Debug.WriteLine($"LoadConnection called for: {connection.Name}");
         _editingConnectionId = connection.Id;
         Name = connection.Name;
         Host = connection.Host;
@@ -108,7 +109,7 @@ public partial class AddConnectionViewModel : ObservableObject
         AuthType = connection.AuthType;
         KeyFilePath = connection.KeyFilePath ?? string.Empty;
         RemotePath = connection.RemotePath;
-        SelectedDriveLetter = connection.MountSettings.DriveLetter;
+        SelectedDriveLetter = connection.MountSettings.DriveLetter ?? string.Empty;
         NetworkMode = connection.MountSettings.NetworkMode;
         VolumeName = connection.MountSettings.VolumeName ?? string.Empty;
         ReadOnly = connection.MountSettings.ReadOnly;
@@ -116,7 +117,33 @@ public partial class AddConnectionViewModel : ObservableObject
         CacheMaxSize = connection.MountSettings.CacheMaxSize;
         DirCacheTimeMinutes = connection.MountSettings.DirCacheTimeMinutes;
         AutoMount = connection.AutoMount;
+        System.Diagnostics.Debug.WriteLine($"After load - Name: {Name}, Host: {Host}, Username: {Username}");
         // Note: Password fields are not loaded for security
+    }
+
+    public void ResetForm()
+    {
+        _editingConnectionId = null;
+        Name = string.Empty;
+        Host = string.Empty;
+        Port = 22;
+        Username = string.Empty;
+        AuthType = AuthenticationType.Password;
+        Password = string.Empty;
+        KeyFilePath = string.Empty;
+        KeyPassphrase = string.Empty;
+        RemotePath = "/";
+        SelectedDriveLetter = string.Empty;
+        NetworkMode = true;
+        VolumeName = string.Empty;
+        ReadOnly = false;
+        CacheMode = VfsCacheMode.Writes;
+        CacheMaxSize = "10G";
+        DirCacheTimeMinutes = 5;
+        AutoMount = false;
+        TestResult = null;
+        TestSuccess = false;
+        ErrorMessage = null;
     }
 
     public void RefreshAvailableDriveLetters() => LoadAvailableDriveLetters();
@@ -180,7 +207,7 @@ public partial class AddConnectionViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private async Task<bool> SaveAsync()
+    public async Task<bool> SaveAsync()
     {
         if (!Validate())
         {

@@ -16,21 +16,23 @@
         </Grid.RowDefinitions>
 
         <!-- Title Bar -->
-        <Grid Grid.Row="0" Background="{ThemeResource LayerFillColorDefaultBrush}" Padding="16,8">
+        <Grid Grid.Row="0" Padding="16,12" Background="{ThemeResource SolidBackgroundFillColorBaseBrush}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
             <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-                <FontIcon Glyph="&#xE8B7;" FontSize="24" Foreground="{StaticResource AppAccentBrush}"/>
-                <TextBlock Text="Rclone GUI" Style="{StaticResource TitleTextBlockStyle}"/>
+                <FontIcon Glyph="&#xE8B7;" FontSize="24" Foreground="{ThemeResource AccentFillColorDefaultBrush}"/>
+                <TextBlock Text="Rclone GUI" Style="{StaticResource TitleTextBlockStyle}" FontWeight="SemiBold"/>
             </StackPanel>
 
             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
                 <Button x:Name="SettingsButton" 
                         ToolTipService.ToolTip="Settings"
-                        Click="SettingsButton_Click">
+                        Click="SettingsButton_Click"
+                        Background="Transparent"
+                        BorderBrush="Transparent">
                     <FontIcon Glyph="&#xE713;" FontSize="16"/>
                 </Button>
             </StackPanel>
@@ -41,8 +43,10 @@
                         Grid.Row="1"
                         IsBackButtonVisible="Collapsed"
                         IsSettingsVisible="False"
+                        IsTitleBarAutoPaddingEnabled="False"
                         PaneDisplayMode="Left"
                         OpenPaneLength="200"
+                        Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
                         SelectionChanged="NavView_SelectionChanged">
 
             <NavigationView.MenuItems>

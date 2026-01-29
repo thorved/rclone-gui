@@ -92,8 +92,77 @@ public partial class MainViewModel : ObservableObject
                 Status = mountStatus?.Status ?? MountStatus.Unmounted,
                 DriveLetter = mountStatus?.DriveLetter ?? connection.MountSettings.DriveLetter
             };
+            
+            // Subscribe to events
+            driveVm.EditRequested += OnDriveEditRequested;
+            driveVm.DeleteRequested += OnDriveDeleteRequested;
+            driveVm.DuplicateRequested += OnDriveDuplicateRequested;
+            
             Drives.Add(driveVm);
         }
+    }
+
+    private void OnDriveEditRequested(object? sender, EventArgs e)
+    {
+        if (sender is DriveItemViewModel drive)
+        {
+            App.MainWindowInstance?.NavigateToAddConnection(drive.Connection);
+        }
+    }
+
+    private async void OnDriveDeleteRequested(object? sender, EventArgs e)
+    {
+        if (sender is DriveItemViewModel drive)
+        {
+            await DeleteConnectionAsync(drive);
+        }
+    }
+
+    private async void OnDriveDuplicateRequested(object? sender, EventArgs e)
+    {
+        if (sender is DriveItemViewModel drive)
+        {
+            await DuplicateConnectionAsync(drive);
+        }
+    }
+
+    private async Task DuplicateConnectionAsync(DriveItemViewModel drive)
+    {
+        // Create a copy of the connection with a new ID and modified name
+        var original = drive.Connection;
+        var duplicate = new SftpConnection
+        {
+            Id = Guid.NewGuid().ToString(),
+            Name = $"{original.Name} (Copy)",
+            Host = original.Host,
+            Port = original.Port,
+            Username = original.Username,
+            AuthType = original.AuthType,
+            ObscuredPassword = original.ObscuredPassword,
+            KeyFilePath = original.KeyFilePath,
+            ObscuredKeyPassphrase = original.ObscuredKeyPassphrase,
+            RemotePath = original.RemotePath,
+            AutoMount = original.AutoMount,
+            MountSettings = new MountSettings
+            {
+                DriveLetter = null, // Will auto-assign
+                NetworkMode = original.MountSettings.NetworkMode,
+                VolumeName = original.MountSettings.VolumeName,
+                ReadOnly = original.MountSettings.ReadOnly,
+                CacheMode = original.MountSettings.CacheMode,
+                CacheMaxSize = original.MountSettings.CacheMaxSize,
+                DirCacheTimeMinutes = original.MountSettings.DirCacheTimeMinutes
+            }
+        };
+
+        // Create rclone remote for duplicate
+        await _rcloneService.CreateSftpRemoteAsync(duplicate);
+
+        // Save to config
+        await _configManager.AddConnectionAsync(duplicate);
+
+        // Refresh UI
+        await RefreshDrivesAsync();
     }
 
     [RelayCommand]

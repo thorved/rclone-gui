@@ -197,6 +197,11 @@ public partial class DriveItemViewModel : ObservableObject
     /// </summary>
     public event EventHandler? DeleteRequested;
 
+    /// <summary>
+    /// Event triggered when the user wants to duplicate this connection.
+    /// </summary>
+    public event EventHandler? DuplicateRequested;
+
     [RelayCommand]
     private void Edit()
     {
@@ -207,6 +212,12 @@ public partial class DriveItemViewModel : ObservableObject
     private void Delete()
     {
         DeleteRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    [RelayCommand]
+    private void Duplicate()
+    {
+        DuplicateRequested?.Invoke(this, EventArgs.Empty);
     }
 
     partial void OnStatusChanged(MountStatus value)

@@ -8,42 +8,51 @@ namespace RcloneGui.Services;
 /// </summary>
 public class WinFspManager : IWinFspManager
 {
-    private const string WinFspRegistryPath = @"SOFTWARE\WinFsp";
+    // Check both 64-bit and 32-bit (WOW6432Node) registry paths
+    private static readonly string[] WinFspRegistryPaths = [
+        @"SOFTWARE\WinFsp",
+        @"SOFTWARE\WOW6432Node\WinFsp"
+    ];
     private const string WinFspInstallDirValue = "InstallDir";
     private const string WinFspDownloadUrl = "https://github.com/winfsp/winfsp/releases/latest";
 
     public bool IsInstalled()
     {
-        // Check registry for WinFsp installation
-        try
+        // Check registry for WinFsp installation (both 64-bit and 32-bit paths)
+        foreach (var registryPath in WinFspRegistryPaths)
         {
-            using var key = Registry.LocalMachine.OpenSubKey(WinFspRegistryPath);
-            if (key != null)
+            try
             {
-                var installDir = key.GetValue(WinFspInstallDirValue) as string;
-                if (!string.IsNullOrEmpty(installDir) && Directory.Exists(installDir))
+                using var key = Registry.LocalMachine.OpenSubKey(registryPath);
+                if (key != null)
                 {
-                    return true;
+                    var installDir = key.GetValue(WinFspInstallDirValue) as string;
+                    if (!string.IsNullOrEmpty(installDir) && Directory.Exists(installDir))
+                    {
+                        return true;
+                    }
                 }
             }
-        }
-        catch
-        {
-            // Registry access may fail
+            catch
+            {
+                // Registry access may fail
+            }
         }
 
-        // Also check common installation paths
-        var programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
-        var winfspPath = Path.Combine(programFiles, "WinFsp");
-        if (Directory.Exists(winfspPath))
+        // Also check common installation paths (both 64-bit and 32-bit Program Files)
+        var programFiles64 = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+        var programFiles86 = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
+        
+        if (Directory.Exists(Path.Combine(programFiles64, "WinFsp")) ||
+            Directory.Exists(Path.Combine(programFiles86, "WinFsp")))
         {
             return true;
         }
 
         // Check if winfsp DLL is available
         var systemPath = Environment.GetFolderPath(Environment.SpecialFolder.System);
-        var winfspDll = Path.Combine(systemPath, "winfsp-x64.dll");
-        if (File.Exists(winfspDll))
+        if (File.Exists(Path.Combine(systemPath, "winfsp-x64.dll")) ||
+            File.Exists(Path.Combine(systemPath, "winfsp-x86.dll")))
         {
             return true;
         }
@@ -53,26 +62,36 @@ public class WinFspManager : IWinFspManager
 
     public string? GetVersion()
     {
-        try
+        // Try to get version from registry (both 64-bit and 32-bit paths)
+        foreach (var registryPath in WinFspRegistryPaths)
         {
-            using var key = Registry.LocalMachine.OpenSubKey(WinFspRegistryPath);
-            if (key != null)
+            try
             {
-                var installDir = key.GetValue(WinFspInstallDirValue) as string;
-                if (!string.IsNullOrEmpty(installDir))
+                using var key = Registry.LocalMachine.OpenSubKey(registryPath);
+                if (key != null)
                 {
-                    var launcherPath = Path.Combine(installDir, "bin", "launcher-x64.exe");
-                    if (File.Exists(launcherPath))
+                    var installDir = key.GetValue(WinFspInstallDirValue) as string;
+                    if (!string.IsNullOrEmpty(installDir))
                     {
-                        var versionInfo = FileVersionInfo.GetVersionInfo(launcherPath);
-                        return versionInfo.FileVersion;
+                        // Try both launcher versions
+                        var launcher64 = Path.Combine(installDir, "bin", "launcher-x64.exe");
+                        var launcher86 = Path.Combine(installDir, "bin", "launcher-x86.exe");
+                        
+                        var launcherPath = File.Exists(launcher64) ? launcher64 : 
+                                          File.Exists(launcher86) ? launcher86 : null;
+                        
+                        if (launcherPath != null)
+                        {
+                            var versionInfo = FileVersionInfo.GetVersionInfo(launcherPath);
+                            return versionInfo.FileVersion;
+                        }
                     }
                 }
             }
-        }
-        catch
-        {
-            // Ignore errors
+            catch
+            {
+                // Ignore errors
+            }
         }
 
         return null;

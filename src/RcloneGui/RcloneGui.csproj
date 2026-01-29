@@ -43,9 +43,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="..\..\binary\rclone-v1.72.1\rclone.exe">
+    <Content Include="..\..\binary\rclone-v1.72.1\rclone.exe">
       <Link>rclone\rclone.exe</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 </Project>

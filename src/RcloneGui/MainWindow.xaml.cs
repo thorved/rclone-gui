@@ -165,6 +165,9 @@ public sealed partial class MainWindow : Window
 
     public void NavigateToAddConnection(Models.SftpConnection? connectionToEdit = null)
     {
+        // Clear cache to ensure fresh page with new parameters
+        ContentFrame.BackStack.Clear();
+        ContentFrame.ForwardStack.Clear();
         ContentFrame.Navigate(typeof(AddConnectionView), connectionToEdit);
         
         foreach (var item in NavView.MenuItems)

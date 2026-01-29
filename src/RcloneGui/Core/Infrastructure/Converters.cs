@@ -392,3 +392,53 @@ public class BoolToTestTitleConverter : IValueConverter
         throw new NotImplementedException();
     }
 }
+
+/// <summary>
+/// Converts a hex color string to a SolidColorBrush.
+/// </summary>
+public class StringToBrushConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, string language)
+    {
+        if (value is string hexColor)
+        {
+            try
+            {
+                hexColor = hexColor.TrimStart('#');
+                
+                byte a = 255;
+                byte r, g, b;
+                
+                if (hexColor.Length == 8)
+                {
+                    a = System.Convert.ToByte(hexColor.Substring(0, 2), 16);
+                    r = System.Convert.ToByte(hexColor.Substring(2, 2), 16);
+                    g = System.Convert.ToByte(hexColor.Substring(4, 2), 16);
+                    b = System.Convert.ToByte(hexColor.Substring(6, 2), 16);
+                }
+                else if (hexColor.Length == 6)
+                {
+                    r = System.Convert.ToByte(hexColor.Substring(0, 2), 16);
+                    g = System.Convert.ToByte(hexColor.Substring(2, 2), 16);
+                    b = System.Convert.ToByte(hexColor.Substring(4, 2), 16);
+                }
+                else
+                {
+                    return new SolidColorBrush(Colors.Gray);
+                }
+                
+                return new SolidColorBrush(Windows.UI.Color.FromArgb(a, r, g, b));
+            }
+            catch
+            {
+                return new SolidColorBrush(Colors.Gray);
+            }
+        }
+        return new SolidColorBrush(Colors.Gray);
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, string language)
+    {
+        throw new NotImplementedException();
+    }
+}

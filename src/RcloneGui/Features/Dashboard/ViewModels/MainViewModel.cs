@@ -190,7 +190,6 @@ public partial class MainViewModel : ObservableObject
             AutoMount = original.AutoMount,
             MountSettings = new MountSettings
             {
-                DriveLetter = null, // Will auto-assign
                 NetworkMode = original.MountSettings.NetworkMode,
                 VolumeName = original.MountSettings.VolumeName,
                 ReadOnly = original.MountSettings.ReadOnly,
@@ -220,7 +219,6 @@ public partial class MainViewModel : ObservableObject
             AutoMount = original.AutoMount,
             MountSettings = new MountSettings
             {
-                DriveLetter = null, // Will auto-assign
                 NetworkMode = original.MountSettings.NetworkMode,
                 VolumeName = original.MountSettings.VolumeName,
                 ReadOnly = original.MountSettings.ReadOnly,

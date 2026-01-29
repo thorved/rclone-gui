@@ -106,7 +106,7 @@ jobs:
           /p:SelfContained=true `
           /p:Platform=${{ env.BUILD_PLATFORM }} `
           /p:PublishSingleFile=false `
-          /p:PublishReadyToRun=true `
+          /p:PublishReadyToRun=false `
           /p:PublishDir=bin\${{ env.BUILD_PLATFORM }}\${{ env.BUILD_CONFIGURATION }}\${{ env.TARGET_FRAMEWORK }}\${{ env.RUNTIME_IDENTIFIER }}\
       shell: pwsh
         

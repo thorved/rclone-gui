@@ -132,7 +132,7 @@
                     Margin="0,0,8,0" MinWidth="80"/>
             
             <Button Grid.Column="2" Content="Save" Style="{StaticResource AccentButtonStyle}"
-                    Command="{x:Bind ViewModel.SaveCommand}" Click="SaveButton_Click"
+                    Click="SaveButton_Click"
                     IsEnabled="{x:Bind ViewModel.IsSaving, Mode=OneWay, Converter={StaticResource InverseBoolConverter}}"
                     MinWidth="80"/>
         </Grid>

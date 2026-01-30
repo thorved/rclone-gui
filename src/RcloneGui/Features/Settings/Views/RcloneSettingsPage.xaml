@@ -98,7 +98,6 @@
             <Grid Margin="0,16,0,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
                 
                 <StackPanel Grid.Column="0" Margin="0,0,8,0">
@@ -111,19 +110,6 @@
                              Text="{x:Bind ViewModel.CacheMaxAge, Mode=TwoWay}"
                              PlaceholderText="72h (optional)"
                              HorizontalAlignment="Stretch"/>
-                </StackPanel>
-                
-                <StackPanel Grid.Column="1" Margin="8,0,0,0">
-                    <TextBlock Text="Max Cached Files" Style="{StaticResource BodyStrongTextBlockStyle}"/>
-                    <TextBlock Text="Maximum number of files in cache (0 = unlimited)"
-                               Style="{StaticResource CaptionTextBlockStyle}"
-                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                               Margin="0,2,0,8"/>
-                    <NumberBox x:Name="CacheMaxFilesBox"
-                               Value="{x:Bind ViewModel.CacheMaxFiles, Mode=TwoWay}"
-                               Minimum="0"
-                               SpinButtonPlacementMode="Compact"
-                               HorizontalAlignment="Stretch"/>
                 </StackPanel>
             </Grid>
             

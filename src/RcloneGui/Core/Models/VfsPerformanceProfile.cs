@@ -98,7 +98,6 @@ public static class VfsPerformanceProfileExtensions
                 settings.CacheMode = VfsCacheMode.Writes;
                 settings.CacheMaxSize = "10G";
                 settings.CacheMaxAge = null;
-                settings.CacheMaxFiles = 0;
                 settings.DirCacheTimeMinutes = 5;
                 settings.PollInterval = 60;
                 settings.BufferSize = "16M";
@@ -116,7 +115,6 @@ public static class VfsPerformanceProfileExtensions
                 settings.CacheMode = VfsCacheMode.Full;
                 settings.CacheMaxSize = "50G";
                 settings.CacheMaxAge = "168h";
-                settings.CacheMaxFiles = 100000;
                 settings.DirCacheTimeMinutes = 60;
                 settings.PollInterval = 300;
                 settings.BufferSize = "64M";
@@ -134,7 +132,6 @@ public static class VfsPerformanceProfileExtensions
                 settings.CacheMode = VfsCacheMode.Full;
                 settings.CacheMaxSize = "100G";
                 settings.CacheMaxAge = null;
-                settings.CacheMaxFiles = 10000;
                 settings.DirCacheTimeMinutes = 30;
                 settings.PollInterval = 120;
                 settings.BufferSize = "128M";
@@ -152,7 +149,6 @@ public static class VfsPerformanceProfileExtensions
                 settings.CacheMode = VfsCacheMode.Minimal;
                 settings.CacheMaxSize = "1G";
                 settings.CacheMaxAge = "24h";
-                settings.CacheMaxFiles = 1000;
                 settings.DirCacheTimeMinutes = 2;
                 settings.PollInterval = 0;
                 settings.BufferSize = "4M";
@@ -170,7 +166,6 @@ public static class VfsPerformanceProfileExtensions
                 settings.CacheMode = VfsCacheMode.Writes;
                 settings.CacheMaxSize = "5G";
                 settings.CacheMaxAge = "72h";
-                settings.CacheMaxFiles = 500000;
                 settings.DirCacheTimeMinutes = 60;
                 settings.PollInterval = 60;
                 settings.BufferSize = "8M";
@@ -188,7 +183,6 @@ public static class VfsPerformanceProfileExtensions
                 settings.CacheMode = VfsCacheMode.Full;
                 settings.CacheMaxSize = "200G";
                 settings.CacheMaxAge = null;
-                settings.CacheMaxFiles = 500000;
                 settings.DirCacheTimeMinutes = 120;
                 settings.PollInterval = 300;
                 settings.BufferSize = "256M";
@@ -221,7 +215,6 @@ public static class VfsPerformanceProfileExtensions
                 settings.CacheMode = VfsCacheMode.Writes;
                 settings.CacheMaxSize = "10G";
                 settings.CacheMaxAge = null;
-                settings.CacheMaxFiles = 0;
                 settings.DirCacheTimeMinutes = 5;
                 settings.PollInterval = 60;
                 settings.BufferSize = "16M";
@@ -239,7 +232,6 @@ public static class VfsPerformanceProfileExtensions
                 settings.CacheMode = VfsCacheMode.Full;
                 settings.CacheMaxSize = "50G";
                 settings.CacheMaxAge = "168h";
-                settings.CacheMaxFiles = 100000;
                 settings.DirCacheTimeMinutes = 60;
                 settings.PollInterval = 300;
                 settings.BufferSize = "64M";
@@ -257,7 +249,6 @@ public static class VfsPerformanceProfileExtensions
                 settings.CacheMode = VfsCacheMode.Full;
                 settings.CacheMaxSize = "100G";
                 settings.CacheMaxAge = null;
-                settings.CacheMaxFiles = 10000;
                 settings.DirCacheTimeMinutes = 30;
                 settings.PollInterval = 120;
                 settings.BufferSize = "128M";
@@ -275,7 +266,6 @@ public static class VfsPerformanceProfileExtensions
                 settings.CacheMode = VfsCacheMode.Minimal;
                 settings.CacheMaxSize = "1G";
                 settings.CacheMaxAge = "24h";
-                settings.CacheMaxFiles = 1000;
                 settings.DirCacheTimeMinutes = 2;
                 settings.PollInterval = 0;
                 settings.BufferSize = "4M";
@@ -293,7 +283,6 @@ public static class VfsPerformanceProfileExtensions
                 settings.CacheMode = VfsCacheMode.Writes;
                 settings.CacheMaxSize = "5G";
                 settings.CacheMaxAge = "72h";
-                settings.CacheMaxFiles = 500000;
                 settings.DirCacheTimeMinutes = 60;
                 settings.PollInterval = 60;
                 settings.BufferSize = "8M";
@@ -311,7 +300,6 @@ public static class VfsPerformanceProfileExtensions
                 settings.CacheMode = VfsCacheMode.Full;
                 settings.CacheMaxSize = "200G";
                 settings.CacheMaxAge = null;
-                settings.CacheMaxFiles = 500000;
                 settings.DirCacheTimeMinutes = 120;
                 settings.PollInterval = 300;
                 settings.BufferSize = "256M";

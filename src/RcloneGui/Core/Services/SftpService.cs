@@ -33,6 +33,22 @@ public class SftpService : ISftpService
         }
     }
 
+    private void LogError(string context, string details)
+    {
+        try
+        {
+            var logDir = Path.Combine(_configManager.AppDataPath, "logs");
+            Directory.CreateDirectory(logDir);
+            var logFile = Path.Combine(logDir, $"rclone_errors_{DateTime.Now:yyyyMMdd}.txt");
+            var timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+            File.AppendAllText(logFile, $"[{timestamp}] {context}\n{details}\n\n---\n\n");
+        }
+        catch
+        {
+            // Ignore logging errors
+        }
+    }
+
     public async Task<string> GetVersionAsync()
     {
         var result = await RunRcloneAsync("version");
@@ -116,6 +132,21 @@ public class SftpService : ISftpService
         var args = new StringBuilder();
         args.Append($"mount \"{remotePath}\" {driveLetter}: ");
         
+        // Cache directory - required for Full cache mode
+        var cacheDir = _configManager.Settings?.CacheDirectory;
+        if (string.IsNullOrEmpty(cacheDir))
+        {
+            cacheDir = Path.Combine(_configManager.AppDataPath, "cache");
+        }
+        
+        // Ensure cache directory exists
+        if (!Directory.Exists(cacheDir))
+        {
+            Directory.CreateDirectory(cacheDir);
+        }
+        
+        args.Append($"--cache-dir \"{cacheDir}\" ");
+        
         // Mount options
         if (settings.NetworkMode)
         {
@@ -147,11 +178,6 @@ public class SftpService : ISftpService
         if (!string.IsNullOrEmpty(effectiveSettings.CacheMaxAge))
         {
             args.Append($"--vfs-cache-max-age {effectiveSettings.CacheMaxAge} ");
-        }
-        
-        if (effectiveSettings.CacheMaxFiles > 0)
-        {
-            args.Append($"--vfs-cache-max-files {effectiveSettings.CacheMaxFiles} ");
         }
         
         args.Append($"--dir-cache-time {effectiveSettings.DirCacheTimeMinutes}m ");
@@ -229,10 +255,13 @@ public class SftpService : ISftpService
             if (process.HasExited)
             {
                 var error = await process.StandardError.ReadToEndAsync(cancellationToken);
+                var output = await process.StandardOutput.ReadToEndAsync(cancellationToken);
+                var fullError = $"Exit code: {process.ExitCode}\n\nStderr:\n{error}\n\nStdout:\n{output}";
+                LogError($"Mount failed for {connection.Name}", $"Command: {args}\n\n{fullError}");
                 return new MountResult
                 {
                     Success = false,
-                    ErrorMessage = error,
+                    ErrorMessage = fullError,
                     DriveLetter = driveLetter
                 };
             }
@@ -261,10 +290,18 @@ public class SftpService : ISftpService
                 };
             }
 
+            // Capture any error output if process is still running but mount failed
+            var finalError = await process.StandardError.ReadToEndAsync(cancellationToken);
+            var finalOutput = await process.StandardOutput.ReadToEndAsync(cancellationToken);
+            var timeoutError = $"Mount did not become accessible in time\n\nCommand: {args}\n\nStderr:\n{finalError}\n\nStdout:\n{finalOutput}";
+            
+            process.Kill();
+            await process.WaitForExitAsync();
+            
             return new MountResult
             {
                 Success = false,
-                ErrorMessage = "Mount did not become accessible in time",
+                ErrorMessage = timeoutError,
                 DriveLetter = driveLetter
             };
         }

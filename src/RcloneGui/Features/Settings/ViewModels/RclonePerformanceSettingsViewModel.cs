@@ -24,9 +24,6 @@ public partial class RclonePerformanceSettingsViewModel : ObservableObject
     [ObservableProperty]
     private string? _cacheMaxAge;
 
-    [ObservableProperty]
-    private int _cacheMaxFiles;
-
     #endregion
 
     #region Directory Caching
@@ -95,8 +92,6 @@ public partial class RclonePerformanceSettingsViewModel : ObservableObject
             args.Add($"--vfs-cache-max-size {CacheMaxSize}");
             if (!string.IsNullOrEmpty(CacheMaxAge))
                 args.Add($"--vfs-cache-max-age {CacheMaxAge}");
-            if (CacheMaxFiles > 0)
-                args.Add($"--vfs-cache-max-files {CacheMaxFiles}");
 
             // Directory Cache
             args.Add($"--dir-cache-time {DirCacheTimeMinutes}m");
@@ -141,7 +136,6 @@ public partial class RclonePerformanceSettingsViewModel : ObservableObject
             CacheMode = settings.CacheMode;
             CacheMaxSize = settings.CacheMaxSize;
             CacheMaxAge = settings.CacheMaxAge;
-            CacheMaxFiles = settings.CacheMaxFiles;
             DirCacheTimeMinutes = settings.DirCacheTimeMinutes;
             PollInterval = settings.PollInterval;
             BufferSize = settings.BufferSize;
@@ -171,7 +165,6 @@ public partial class RclonePerformanceSettingsViewModel : ObservableObject
             CacheMode = CacheMode,
             CacheMaxSize = CacheMaxSize,
             CacheMaxAge = CacheMaxAge,
-            CacheMaxFiles = CacheMaxFiles,
             DirCacheTimeMinutes = DirCacheTimeMinutes,
             PollInterval = PollInterval,
             BufferSize = BufferSize,
@@ -197,7 +190,6 @@ public partial class RclonePerformanceSettingsViewModel : ObservableObject
         CacheMode = defaults.CacheMode;
         CacheMaxSize = defaults.CacheMaxSize;
         CacheMaxAge = defaults.CacheMaxAge;
-        CacheMaxFiles = defaults.CacheMaxFiles;
         DirCacheTimeMinutes = defaults.DirCacheTimeMinutes;
         PollInterval = defaults.PollInterval;
         BufferSize = defaults.BufferSize;
@@ -223,7 +215,6 @@ public partial class RclonePerformanceSettingsViewModel : ObservableObject
             CacheMode = tempSettings.CacheMode;
             CacheMaxSize = tempSettings.CacheMaxSize;
             CacheMaxAge = tempSettings.CacheMaxAge;
-            CacheMaxFiles = tempSettings.CacheMaxFiles;
             DirCacheTimeMinutes = tempSettings.DirCacheTimeMinutes;
             PollInterval = tempSettings.PollInterval;
             BufferSize = tempSettings.BufferSize;
@@ -248,7 +239,6 @@ public partial class RclonePerformanceSettingsViewModel : ObservableObject
     partial void OnCacheModeChanged(VfsCacheMode value) { OnPropertyChanged(nameof(MountCommandPreview)); SetProfileToCustomIfManual(); }
     partial void OnCacheMaxSizeChanged(string value) { OnPropertyChanged(nameof(MountCommandPreview)); SetProfileToCustomIfManual(); }
     partial void OnCacheMaxAgeChanged(string? value) { OnPropertyChanged(nameof(MountCommandPreview)); SetProfileToCustomIfManual(); }
-    partial void OnCacheMaxFilesChanged(int value) { OnPropertyChanged(nameof(MountCommandPreview)); SetProfileToCustomIfManual(); }
     partial void OnDirCacheTimeMinutesChanged(int value) { OnPropertyChanged(nameof(MountCommandPreview)); SetProfileToCustomIfManual(); }
     partial void OnPollIntervalChanged(int value) { OnPropertyChanged(nameof(MountCommandPreview)); SetProfileToCustomIfManual(); }
     partial void OnBufferSizeChanged(string value) { OnPropertyChanged(nameof(MountCommandPreview)); SetProfileToCustomIfManual(); }

@@ -22,11 +22,6 @@ public class GlobalVfsSettings
     public string? CacheMaxAge { get; set; } = null;
 
     /// <summary>
-    /// Maximum number of cached files. 0 = unlimited.
-    /// </summary>
-    public int CacheMaxFiles { get; set; } = 0;
-
-    /// <summary>
     /// Directory cache time in minutes.
     /// </summary>
     public int DirCacheTimeMinutes { get; set; } = 5;
@@ -110,7 +105,6 @@ public class GlobalVfsSettings
         CacheMode = VfsCacheMode.Writes;
         CacheMaxSize = "10G";
         CacheMaxAge = null;
-        CacheMaxFiles = 0;
         DirCacheTimeMinutes = 5;
         PollInterval = 60;
         BufferSize = "16M";
@@ -137,7 +131,6 @@ public class GlobalVfsSettings
             CacheMode = CacheMode,
             CacheMaxSize = CacheMaxSize,
             CacheMaxAge = CacheMaxAge,
-            CacheMaxFiles = CacheMaxFiles,
             DirCacheTimeMinutes = DirCacheTimeMinutes,
             PollInterval = PollInterval,
             BufferSize = BufferSize,
@@ -164,7 +157,6 @@ public class GlobalVfsSettings
             CacheMode = CacheMode,
             CacheMaxSize = CacheMaxSize,
             CacheMaxAge = CacheMaxAge,
-            CacheMaxFiles = CacheMaxFiles,
             DirCacheTimeMinutes = DirCacheTimeMinutes,
             PollInterval = PollInterval,
             BufferSize = BufferSize,

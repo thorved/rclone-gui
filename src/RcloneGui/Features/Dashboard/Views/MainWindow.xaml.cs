@@ -4,6 +4,7 @@ using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using RcloneGui.Core.Models;
 using RcloneGui.Core.Services;
 using RcloneGui.Features.Dashboard.ViewModels;
 using RcloneGui.Features.Dashboard.Views;
@@ -105,11 +106,44 @@ public sealed partial class MainWindow : Window
     private async Task InitializeAsync()
     {
         await _viewModel.InitializeAsync();
+        
+        // Subscribe to mount errors to show detailed error dialogs
+        var mountManager = App.Services.GetRequiredService<IMountManager>();
+        mountManager.MountStatusChanged += OnMountStatusChanged;
 
         // Check WinFsp and show warning if not installed
         if (!_viewModel.IsWinFspInstalled)
         {
             await ShowWinFspWarningAsync();
+        }
+    }
+    
+    private void OnMountStatusChanged(object? sender, MountStatusChangedEventArgs e)
+    {
+        if (e.NewStatus == MountStatus.Error && !string.IsNullOrEmpty(e.ErrorMessage))
+        {
+            // Show error dialog on UI thread
+            _ = DispatcherQueue.TryEnqueue(async () =>
+            {
+                var dialog = new ContentDialog
+                {
+                    Title = "Mount Failed",
+                    Content = new ScrollViewer
+                    {
+                        MaxHeight = 400,
+                        Content = new TextBlock
+                        {
+                            Text = e.ErrorMessage,
+                            TextWrapping = TextWrapping.Wrap,
+                            IsTextSelectionEnabled = true
+                        }
+                    },
+                    CloseButtonText = "OK",
+                    XamlRoot = Content.XamlRoot
+                };
+
+                await dialog.ShowAsync();
+            });
         }
     }
 

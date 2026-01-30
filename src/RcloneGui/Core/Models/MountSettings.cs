@@ -48,11 +48,6 @@ public class MountSettings
     public string? CacheMaxAge { get; set; } = null;
 
     /// <summary>
-    /// Maximum number of cached files. 0 = unlimited.
-    /// </summary>
-    public int CacheMaxFiles { get; set; } = 0;
-
-    /// <summary>
     /// Poll interval in seconds to check for remote changes. 0 = disabled.
     /// </summary>
     public int PollInterval { get; set; } = 60;
@@ -128,7 +123,6 @@ public class MountSettings
             CacheMaxSize = CacheMaxSize,
             DirCacheTimeMinutes = DirCacheTimeMinutes,
             CacheMaxAge = CacheMaxAge,
-            CacheMaxFiles = CacheMaxFiles,
             PollInterval = PollInterval,
             BufferSize = BufferSize,
             ChunkSize = ChunkSize,

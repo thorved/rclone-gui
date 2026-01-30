@@ -378,4 +378,9 @@ public sealed partial class MainWindow : Window
             }
         }
     }
+
+    public void NavigateToRclonePerformanceSettings()
+    {
+        ContentFrame.Navigate(typeof(RcloneGui.Features.Settings.Views.RclonePerformanceSettingsPage));
+    }
 }

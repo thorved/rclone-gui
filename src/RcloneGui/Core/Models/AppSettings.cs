@@ -62,4 +62,9 @@ public class AppSettings
     /// List of configured FTP connections.
     /// </summary>
     public List<FtpConnection> FtpConnections { get; set; } = new();
+
+    /// <summary>
+    /// Global VFS and performance settings applied to all mounts by default.
+    /// </summary>
+    public GlobalVfsSettings GlobalVfsSettings { get; set; } = new();
 }

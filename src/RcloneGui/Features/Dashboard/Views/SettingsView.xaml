@@ -143,6 +143,43 @@
                                  Text="{x:Bind ViewModel.CacheDirectory, Mode=TwoWay}"/>
                         <Button Grid.Column="1" Content="Browse" Margin="8,0,0,0" Click="BrowseCacheDir_Click"/>
                     </Grid>
+                    
+                    <Border Height="1" 
+                            Background="{ThemeResource DividerStrokeColorDefaultBrush}"
+                            Margin="0,16"/>
+                    
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Rclone Performance Settings" Style="{StaticResource BodyStrongTextBlockStyle}"/>
+                            <TextBlock x:Name="VfsSettingsStatusText"
+                                       Text="Using default settings"
+                                       Style="{StaticResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                       Margin="0,2,0,0"/>
+                        </StackPanel>
+                        <Button Grid.Column="1" 
+                                Content="Configure" 
+                                VerticalAlignment="Center"
+                                Click="OpenRcloneSettings_Click">
+                            <Button.Resources>
+                                <ResourceDictionary>
+                                    <FontIcon x:Key="CustomSettingsIcon" Glyph="&#xE713;" FontSize="16"/>
+                                </ResourceDictionary>
+                            </Button.Resources>
+                            <Button.ContentTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <FontIcon Glyph="&#xE713;" FontSize="16"/>
+                                        <TextBlock Text="Configure"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </Button.ContentTemplate>
+                        </Button>
+                    </Grid>
                 </StackPanel>
             </Grid>
             

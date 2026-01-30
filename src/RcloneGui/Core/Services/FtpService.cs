@@ -116,6 +116,11 @@ public class FtpService : IFtpService
         await CreateRemoteAsync(connection);
 
         var settings = connection.MountSettings;
+        var globalSettings = _configManager.Settings?.GlobalVfsSettings ?? new GlobalVfsSettings();
+        
+        // Always use global VFS settings
+        var effectiveSettings = globalSettings.ToMountSettings();
+        
         var remotePath = $"{connection.RcloneRemoteName}:{connection.RemotePath}";
 
         var args = new StringBuilder();
@@ -142,14 +147,69 @@ public class FtpService : IFtpService
         }
 
         // VFS cache settings
-        args.Append($"--vfs-cache-mode {settings.CacheMode.ToString().ToLower()} ");
+        args.Append($"--vfs-cache-mode {effectiveSettings.CacheMode.ToString().ToLower()} ");
 
-        if (!string.IsNullOrEmpty(settings.CacheMaxSize))
+        if (!string.IsNullOrEmpty(effectiveSettings.CacheMaxSize))
         {
-            args.Append($"--vfs-cache-max-size {settings.CacheMaxSize} ");
+            args.Append($"--vfs-cache-max-size {effectiveSettings.CacheMaxSize} ");
+        }
+        
+        if (!string.IsNullOrEmpty(effectiveSettings.CacheMaxAge))
+        {
+            args.Append($"--vfs-cache-max-age {effectiveSettings.CacheMaxAge} ");
+        }
+        
+        if (effectiveSettings.CacheMaxFiles > 0)
+        {
+            args.Append($"--vfs-cache-max-files {effectiveSettings.CacheMaxFiles} ");
         }
 
-        args.Append($"--dir-cache-time {settings.DirCacheTimeMinutes}m ");
+        args.Append($"--dir-cache-time {effectiveSettings.DirCacheTimeMinutes}m ");
+        
+        if (effectiveSettings.PollInterval > 0)
+        {
+            args.Append($"--poll-interval {effectiveSettings.PollInterval}s ");
+        }
+        
+        // Performance settings
+        if (!string.IsNullOrEmpty(effectiveSettings.BufferSize))
+        {
+            args.Append($"--buffer-size {effectiveSettings.BufferSize} ");
+        }
+        
+        if (!string.IsNullOrEmpty(effectiveSettings.ChunkSize))
+        {
+            args.Append($"--vfs-read-chunk-size {effectiveSettings.ChunkSize} ");
+        }
+        
+        args.Append($"--transfers {effectiveSettings.Transfers} ");
+        args.Append($"--checkers {effectiveSettings.Checkers} ");
+        
+        // Advanced settings
+        if (effectiveSettings.AsyncRead)
+        {
+            args.Append("--vfs-read-wait 0 ");
+        }
+        
+        if (effectiveSettings.AsyncWrite)
+        {
+            args.Append("--vfs-write-wait 0 ");
+        }
+        
+        if (!string.IsNullOrEmpty(effectiveSettings.Umask) && effectiveSettings.Umask != "000")
+        {
+            args.Append($"--umask {effectiveSettings.Umask} ");
+        }
+        
+        if (effectiveSettings.UID > 0)
+        {
+            args.Append($"--uid {effectiveSettings.UID} ");
+        }
+        
+        if (effectiveSettings.GID > 0)
+        {
+            args.Append($"--gid {effectiveSettings.GID} ");
+        }
 
         // Additional recommended options
         args.Append("--vfs-cache-poll-interval 1m ");

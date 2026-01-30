@@ -84,4 +84,10 @@ public sealed partial class SettingsView : Page
             await ViewModel.ImportConfigFromPathAsync(file.Path);
         }
     }
+
+    private void OpenRcloneSettings_Click(object sender, RoutedEventArgs e)
+    {
+        // Navigate to Rclone Performance Settings page
+        App.MainWindowInstance?.NavigateToRclonePerformanceSettings();
+    }
 }

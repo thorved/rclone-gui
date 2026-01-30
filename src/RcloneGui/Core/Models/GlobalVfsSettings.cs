@@ -1,30 +1,11 @@
 namespace RcloneGui.Core.Models;
 
 /// <summary>
-/// Mount-specific settings for a connection.
+/// Global VFS and performance settings for rclone.
+/// These are the default settings applied to all mounts unless overridden per-drive.
 /// </summary>
-public class MountSettings
+public class GlobalVfsSettings
 {
-    /// <summary>
-    /// Preferred drive letter (A-Z) or empty for auto-assign.
-    /// </summary>
-    public string DriveLetter { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Whether to mount as network drive instead of fixed disk.
-    /// </summary>
-    public bool NetworkMode { get; set; } = true;
-
-    /// <summary>
-    /// Custom volume name displayed in Explorer.
-    /// </summary>
-    public string? VolumeName { get; set; }
-
-    /// <summary>
-    /// Whether to mount as read-only.
-    /// </summary>
-    public bool ReadOnly { get; set; } = false;
-
     /// <summary>
     /// VFS cache mode: off, minimal, writes, full.
     /// </summary>
@@ -36,13 +17,6 @@ public class MountSettings
     public string CacheMaxSize { get; set; } = "10G";
 
     /// <summary>
-    /// Directory cache time in minutes.
-    /// </summary>
-    public int DirCacheTimeMinutes { get; set; } = 5;
-
-    // ==================== ADVANCED VFS SETTINGS ====================
-
-    /// <summary>
     /// Maximum age of cached files (e.g., "72h", "7d"). Empty = no limit.
     /// </summary>
     public string? CacheMaxAge { get; set; } = null;
@@ -51,6 +25,11 @@ public class MountSettings
     /// Maximum number of cached files. 0 = unlimited.
     /// </summary>
     public int CacheMaxFiles { get; set; } = 0;
+
+    /// <summary>
+    /// Directory cache time in minutes.
+    /// </summary>
+    public int DirCacheTimeMinutes { get; set; } = 5;
 
     /// <summary>
     /// Poll interval in seconds to check for remote changes. 0 = disabled.
@@ -103,32 +82,63 @@ public class MountSettings
     public int GID { get; set; } = 0;
 
     /// <summary>
-    /// Whether to use default global settings for this connection.
-    /// When true, all VFS settings above are ignored and global defaults are used.
-    /// </summary>
-    public bool UseGlobalVfsSettings { get; set; } = true;
-
-    /// <summary>
-    /// Apply a performance profile to quickly set recommended values.
+    /// Currently selected performance profile.
     /// </summary>
     public VfsPerformanceProfile PerformanceProfile { get; set; } = VfsPerformanceProfile.Default;
 
     /// <summary>
-    /// Creates a deep copy of these settings.
+    /// Whether these settings have been customized from defaults.
+    /// Used to show indicator in UI.
     /// </summary>
-    public MountSettings Clone()
+    public bool IsCustomized { get; set; } = false;
+
+    /// <summary>
+    /// Applies a performance profile to these settings.
+    /// </summary>
+    public void ApplyProfile(VfsPerformanceProfile profile)
+    {
+        profile.ApplyTo(this);
+        PerformanceProfile = profile;
+        IsCustomized = true;
+    }
+
+    /// <summary>
+    /// Resets all settings to their default values.
+    /// </summary>
+    public void ResetToDefaults()
+    {
+        CacheMode = VfsCacheMode.Writes;
+        CacheMaxSize = "10G";
+        CacheMaxAge = null;
+        CacheMaxFiles = 0;
+        DirCacheTimeMinutes = 5;
+        PollInterval = 60;
+        BufferSize = "16M";
+        ChunkSize = "64M";
+        Transfers = 4;
+        Checkers = 8;
+        AsyncRead = true;
+        AsyncWrite = false;
+        Umask = "000";
+        UID = 0;
+        GID = 0;
+        PerformanceProfile = VfsPerformanceProfile.Default;
+        IsCustomized = false;
+    }
+
+    /// <summary>
+    /// Creates a MountSettings instance from these global settings.
+    /// Used when applying global defaults to a connection.
+    /// </summary>
+    public MountSettings ToMountSettings()
     {
         return new MountSettings
         {
-            DriveLetter = DriveLetter,
-            NetworkMode = NetworkMode,
-            VolumeName = VolumeName,
-            ReadOnly = ReadOnly,
             CacheMode = CacheMode,
             CacheMaxSize = CacheMaxSize,
-            DirCacheTimeMinutes = DirCacheTimeMinutes,
             CacheMaxAge = CacheMaxAge,
             CacheMaxFiles = CacheMaxFiles,
+            DirCacheTimeMinutes = DirCacheTimeMinutes,
             PollInterval = PollInterval,
             BufferSize = BufferSize,
             ChunkSize = ChunkSize,
@@ -139,8 +149,35 @@ public class MountSettings
             Umask = Umask,
             UID = UID,
             GID = GID,
-            UseGlobalVfsSettings = UseGlobalVfsSettings,
-            PerformanceProfile = PerformanceProfile
+            PerformanceProfile = PerformanceProfile,
+            UseGlobalVfsSettings = true
+        };
+    }
+
+    /// <summary>
+    /// Creates a deep copy of these settings.
+    /// </summary>
+    public GlobalVfsSettings Clone()
+    {
+        return new GlobalVfsSettings
+        {
+            CacheMode = CacheMode,
+            CacheMaxSize = CacheMaxSize,
+            CacheMaxAge = CacheMaxAge,
+            CacheMaxFiles = CacheMaxFiles,
+            DirCacheTimeMinutes = DirCacheTimeMinutes,
+            PollInterval = PollInterval,
+            BufferSize = BufferSize,
+            ChunkSize = ChunkSize,
+            Transfers = Transfers,
+            Checkers = Checkers,
+            AsyncRead = AsyncRead,
+            AsyncWrite = AsyncWrite,
+            Umask = Umask,
+            UID = UID,
+            GID = GID,
+            PerformanceProfile = PerformanceProfile,
+            IsCustomized = IsCustomized
         };
     }
 }

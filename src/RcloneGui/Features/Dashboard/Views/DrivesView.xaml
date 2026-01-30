@@ -130,7 +130,7 @@
                                 <Button Tag="{x:Bind}" Click="SettingsButton_Click" ToolTipService.ToolTip="Settings">
                                     <FontIcon Glyph="&#xE713;" FontSize="16"/>
                                 </Button>
-                                <Button Tag="{x:Bind}" ToolTipService.ToolTip="More Options">
+                                <Button ToolTipService.ToolTip="More Options">
                                     <FontIcon Glyph="&#xE712;" FontSize="16"/>
                                     <Button.Flyout>
                                         <MenuFlyout>

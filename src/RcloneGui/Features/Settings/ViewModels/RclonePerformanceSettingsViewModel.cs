@@ -214,41 +214,59 @@ public partial class RclonePerformanceSettingsViewModel : ObservableObject
 
     public void ApplyPerformanceProfile(VfsPerformanceProfile profile)
     {
-        var tempSettings = new GlobalVfsSettings();
-        profile.ApplyTo(tempSettings);
+        _isInitializing = true;
+        try
+        {
+            var tempSettings = new GlobalVfsSettings();
+            profile.ApplyTo(tempSettings);
 
-        CacheMode = tempSettings.CacheMode;
-        CacheMaxSize = tempSettings.CacheMaxSize;
-        CacheMaxAge = tempSettings.CacheMaxAge;
-        CacheMaxFiles = tempSettings.CacheMaxFiles;
-        DirCacheTimeMinutes = tempSettings.DirCacheTimeMinutes;
-        PollInterval = tempSettings.PollInterval;
-        BufferSize = tempSettings.BufferSize;
-        ChunkSize = tempSettings.ChunkSize;
-        Transfers = tempSettings.Transfers;
-        Checkers = tempSettings.Checkers;
-        AsyncRead = tempSettings.AsyncRead;
-        AsyncWrite = tempSettings.AsyncWrite;
-        Umask = tempSettings.Umask;
-        Uid = tempSettings.UID;
-        Gid = tempSettings.GID;
-        SelectedProfile = profile;
+            CacheMode = tempSettings.CacheMode;
+            CacheMaxSize = tempSettings.CacheMaxSize;
+            CacheMaxAge = tempSettings.CacheMaxAge;
+            CacheMaxFiles = tempSettings.CacheMaxFiles;
+            DirCacheTimeMinutes = tempSettings.DirCacheTimeMinutes;
+            PollInterval = tempSettings.PollInterval;
+            BufferSize = tempSettings.BufferSize;
+            ChunkSize = tempSettings.ChunkSize;
+            Transfers = tempSettings.Transfers;
+            Checkers = tempSettings.Checkers;
+            AsyncRead = tempSettings.AsyncRead;
+            AsyncWrite = tempSettings.AsyncWrite;
+            Umask = tempSettings.Umask;
+            Uid = tempSettings.UID;
+            Gid = tempSettings.GID;
+            SelectedProfile = profile;
+        }
+        finally
+        {
+            _isInitializing = false;
+        }
     }
 
     // Trigger property changed for MountCommandPreview when any setting changes
-    partial void OnCacheModeChanged(VfsCacheMode value) => OnPropertyChanged(nameof(MountCommandPreview));
-    partial void OnCacheMaxSizeChanged(string value) => OnPropertyChanged(nameof(MountCommandPreview));
-    partial void OnCacheMaxAgeChanged(string? value) => OnPropertyChanged(nameof(MountCommandPreview));
-    partial void OnCacheMaxFilesChanged(int value) => OnPropertyChanged(nameof(MountCommandPreview));
-    partial void OnDirCacheTimeMinutesChanged(int value) => OnPropertyChanged(nameof(MountCommandPreview));
-    partial void OnPollIntervalChanged(int value) => OnPropertyChanged(nameof(MountCommandPreview));
-    partial void OnBufferSizeChanged(string value) => OnPropertyChanged(nameof(MountCommandPreview));
-    partial void OnChunkSizeChanged(string value) => OnPropertyChanged(nameof(MountCommandPreview));
-    partial void OnTransfersChanged(int value) => OnPropertyChanged(nameof(MountCommandPreview));
-    partial void OnCheckersChanged(int value) => OnPropertyChanged(nameof(MountCommandPreview));
-    partial void OnAsyncReadChanged(bool value) => OnPropertyChanged(nameof(MountCommandPreview));
-    partial void OnAsyncWriteChanged(bool value) => OnPropertyChanged(nameof(MountCommandPreview));
-    partial void OnUmaskChanged(string value) => OnPropertyChanged(nameof(MountCommandPreview));
-    partial void OnUidChanged(int value) => OnPropertyChanged(nameof(MountCommandPreview));
-    partial void OnGidChanged(int value) => OnPropertyChanged(nameof(MountCommandPreview));
+    // Also change profile to Custom when user manually changes settings
+    partial void OnCacheModeChanged(VfsCacheMode value) { OnPropertyChanged(nameof(MountCommandPreview)); SetProfileToCustomIfManual(); }
+    partial void OnCacheMaxSizeChanged(string value) { OnPropertyChanged(nameof(MountCommandPreview)); SetProfileToCustomIfManual(); }
+    partial void OnCacheMaxAgeChanged(string? value) { OnPropertyChanged(nameof(MountCommandPreview)); SetProfileToCustomIfManual(); }
+    partial void OnCacheMaxFilesChanged(int value) { OnPropertyChanged(nameof(MountCommandPreview)); SetProfileToCustomIfManual(); }
+    partial void OnDirCacheTimeMinutesChanged(int value) { OnPropertyChanged(nameof(MountCommandPreview)); SetProfileToCustomIfManual(); }
+    partial void OnPollIntervalChanged(int value) { OnPropertyChanged(nameof(MountCommandPreview)); SetProfileToCustomIfManual(); }
+    partial void OnBufferSizeChanged(string value) { OnPropertyChanged(nameof(MountCommandPreview)); SetProfileToCustomIfManual(); }
+    partial void OnChunkSizeChanged(string value) { OnPropertyChanged(nameof(MountCommandPreview)); SetProfileToCustomIfManual(); }
+    partial void OnTransfersChanged(int value) { OnPropertyChanged(nameof(MountCommandPreview)); SetProfileToCustomIfManual(); }
+    partial void OnCheckersChanged(int value) { OnPropertyChanged(nameof(MountCommandPreview)); SetProfileToCustomIfManual(); }
+    partial void OnAsyncReadChanged(bool value) { OnPropertyChanged(nameof(MountCommandPreview)); SetProfileToCustomIfManual(); }
+    partial void OnAsyncWriteChanged(bool value) { OnPropertyChanged(nameof(MountCommandPreview)); SetProfileToCustomIfManual(); }
+    partial void OnUmaskChanged(string value) { OnPropertyChanged(nameof(MountCommandPreview)); SetProfileToCustomIfManual(); }
+    partial void OnUidChanged(int value) { OnPropertyChanged(nameof(MountCommandPreview)); SetProfileToCustomIfManual(); }
+    partial void OnGidChanged(int value) { OnPropertyChanged(nameof(MountCommandPreview)); SetProfileToCustomIfManual(); }
+
+    private void SetProfileToCustomIfManual()
+    {
+        // Only change to Custom if not initializing and not already Custom
+        if (!_isInitializing && SelectedProfile != VfsPerformanceProfile.Custom)
+        {
+            SelectedProfile = VfsPerformanceProfile.Custom;
+        }
+    }
 }

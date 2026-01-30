@@ -11,11 +11,12 @@ namespace RcloneGui.Features.Settings.Views;
 /// <summary>
 /// Page for configuring global rclone performance and VFS settings.
 /// </summary>
-public sealed partial class RclonePerformanceSettingsPage : Page
+public sealed partial class RcloneSettingsPage : Page
 {
     public RclonePerformanceSettingsViewModel ViewModel { get; }
+    private bool _isInitializing;
 
-    public RclonePerformanceSettingsPage()
+    public RcloneSettingsPage()
     {
         this.InitializeComponent();
         
@@ -30,10 +31,18 @@ public sealed partial class RclonePerformanceSettingsPage : Page
         ProfileComboBox.ItemsSource = Enum.GetValues<VfsPerformanceProfile>();
     }
 
-    protected override void OnNavigatedTo(NavigationEventArgs e)
+    protected override async void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
-        _ = ViewModel.InitializeAsync();
+        _isInitializing = true;
+        try
+        {
+            await ViewModel.InitializeAsync();
+        }
+        finally
+        {
+            _isInitializing = false;
+        }
     }
 
     private async void Save_Click(object sender, RoutedEventArgs e)
@@ -44,12 +53,20 @@ public sealed partial class RclonePerformanceSettingsPage : Page
         var dialog = new ContentDialog
         {
             Title = "Settings Saved",
-            Content = "Your rclone performance settings have been saved.",
+            Content = "Your rclone settings have been saved.",
             CloseButtonText = "OK",
             XamlRoot = this.XamlRoot
         };
         
-        await dialog.ShowAsync();
+        _isInitializing = true;
+        try
+        {
+            await dialog.ShowAsync();
+        }
+        finally
+        {
+            _isInitializing = false;
+        }
     }
 
     private async void ResetToDefaults_Click(object sender, RoutedEventArgs e)
@@ -57,7 +74,7 @@ public sealed partial class RclonePerformanceSettingsPage : Page
         var dialog = new ContentDialog
         {
             Title = "Reset to Defaults",
-            Content = "Are you sure you want to reset all performance settings to their default values?",
+            Content = "Are you sure you want to reset all settings to their default values?",
             PrimaryButtonText = "Reset",
             CloseButtonText = "Cancel",
             DefaultButton = ContentDialogButton.Close,
@@ -74,6 +91,10 @@ public sealed partial class RclonePerformanceSettingsPage : Page
 
     private void ProfileComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
+        // Skip during initialization to prevent overwriting loaded values
+        if (_isInitializing)
+            return;
+
         if (e.AddedItems.FirstOrDefault() is VfsPerformanceProfile profile)
         {
             ViewModel.ApplyPerformanceProfile(profile);
